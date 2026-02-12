@@ -25,7 +25,7 @@ import CreatePasswordonForget from "../screens/CreatePasswordonForget/CreatePass
 import GroupChatScreen from "../screens/GroupChatScreen";
 import GroupDetails from "../screens/GroupDetail/GroupDetail";
 import SlameQuestionChatSendScreen from "../screens/SlameQuestionChatSendScreen/SlameQuestionChatSendScreen";
-import SlameQuestionChatScreen from "../screens/SlameQuestionChatScreen /SlameQuestionChatScreen";
+import SlameQuestionChatScreen from "../screens/SlameQuestionChatScreen/SlameQuestionChatScreen";
 import WallpaperScreen from "../screens/WallPaper/wallpaper";
 import CommunitChat from "../screens/CommunitChat";
 import CommunityDetails from "../screens/CommunityDetails/CommunityDetails";
