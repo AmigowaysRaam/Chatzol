@@ -148,7 +148,7 @@ const RegisterScreen = () => {
               }));
             }, 1000);
           } else {
-            fnAlert(response.message); // Use the response message correctly
+            fnAlert(response.message); // Use the response message correctly 
           }
         })
       );
@@ -163,7 +163,7 @@ const RegisterScreen = () => {
       text2: response, // Use the response here
       type: "error",
     });
-  }
+  } 
 
 
   return (
@@ -233,7 +233,7 @@ const RegisterScreen = () => {
             // Clear error if email is valid
             setErrors((prevErrors) => ({
               ...prevErrors,
-              email: "", // Clear the email error
+              email: "", // Clear the email error 
             }));
           }
         }}
@@ -287,7 +287,7 @@ const RegisterScreen = () => {
         <Text style={[styles.error, { color: COLORS.validation }]}>{errors.password}</Text>
       )}
 
-      {/* Confirm Password Field */}
+      {/* Confirm Password Field  */}
       <View style={styles.passwordContainer}>
         <TextInputComponent
           title="Confirm Password"
@@ -312,19 +312,25 @@ const RegisterScreen = () => {
       )}
 
       <ButtonComponent title={"Register"} isLoading={isLoading} onPress={handleRegister} />
+      <View style={{flexDirection:'row'}}>
+        <Text style={[Louis_George_Cafe.bold.h8, { color: COLORS.white, marginTop: hp(2) }]}>
+          If you already have an account, Click here to 
+        </Text>
       <TouchableOpacity
         // onPress={() => handleRegister()}
+
         onPress={() =>
           navigation.navigate("LoginScreen")
         }
       >
-        <Text style={[Louis_George_Cafe.bold.h9, { color: COLORS.white, marginTop: hp(2) }]}>
-          If you already have an account, Click here to log in.
-        </Text>
+        <Text style={{marginTop:wp(4)}}> Login</Text>
       </TouchableOpacity>
+      </View>
+      
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

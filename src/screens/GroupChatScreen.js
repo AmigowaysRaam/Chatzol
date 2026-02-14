@@ -36,6 +36,8 @@ import Toast from "react-native-toast-message";
 import ImageCropPicker from "react-native-image-crop-picker";
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 
+const audioRecorderPlayer = new AudioRecorderPlayer();
+
 
 const GroupChatScreen = () => {
 
@@ -615,8 +617,9 @@ const GroupChatScreen = () => {
           </LinearGradient>
 
           <FlatList
-            inverted
+            
             data={chatMessages}
+            inverted={true}
             renderItem={({ item }) => renderMessage({ item, handleAlertDelete, handleOpenDialogBox })}
 
             keyExtractor={(item) => item._id}

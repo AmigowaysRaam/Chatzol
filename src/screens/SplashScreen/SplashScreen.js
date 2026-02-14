@@ -16,7 +16,7 @@ const Splash = () => {
   const fnAssignUserData = async () => {
     const userData = await AsyncStorage.getItem("user_data");
     const obj = JSON.parse(userData);
-    Alert.alert("", JSON.stringify(obj))
+    // Alert.alert("", JSON.stringify(obj))
     if (obj) {
       dispatch({ type: "UPDATE_PROFILE_USER_SUCCESS", payload: obj });
       dispatch({ type: "LOGIN_USER_SUCCESS", payload: obj });

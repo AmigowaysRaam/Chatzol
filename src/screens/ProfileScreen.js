@@ -1,294 +1,233 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import { wp, hp } from "../resources/dimensions";
+import React, { useEffect, useState, useCallback } from "react";
+import { View,  Text,  Image,  StyleSheet,  TouchableOpacity,  SafeAreaView,  StatusBar,  ScrollView,} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "../resources/Colors";
-import { Divider } from "react-native-paper";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { useDispatch, useSelector } from "react-redux";
-import { Louis_George_Cafe } from "../resources/fonts";
-import {
-  getUserProfile,
-  logout,
-} from "../redux/authActions";
-import { useNavigationFocusHooks } from "../utils/NavigationListenerHooks";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
+import { Divider } from "react-native-paper";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useDispatch, useSelector } from "react-redux";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { wp, hp } from "../resources/dimensions";
+import { COLORS } from "../resources/Colors";
+import { Louis_George_Cafe } from "../resources/fonts";
+import { getUserProfile, logout } from "../redux/authActions";
 
 const ProfileScreen = () => {
-
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const route = useRoute();
 
   const userId = useSelector((state) => state.auth.user?._id);
   const profile = useSelector((state) => state.auth.profile);
 
-  const [isLogoutLoading, setIsLogoutLoading] = useState(false);
   const [profileImage, setProfileImage] = useState(
     profile?.profilepicture
   );
 
-  // useEffect(() => {
-  //   if (!userId) {
-  //     navigation.replace("LoginScreen");
-  //   }
-  // }, [userId]);
-
-  function onNavigationFocused() {
-    if (userId) {
-      fetchUserProfile();
-    }
-  }
+  // Refresh profile when screen focuses
+  useFocusEffect(
+    useCallback(() => {
+      if (userId) {
+        dispatch(getUserProfile(userId));
+      }
+    }, [userId])
+  );
 
   useEffect(() => {
-    setProfileImage(profile?.profilepicture)
+    setProfileImage(profile?.profilepicture);
   }, [profile?.profilepicture]);
 
-
-
-  function onNavigationExit() { }
-
-  const navListener = useNavigationFocusHooks({
-    onNavigationFocused,
-    onNavigationExit,
-  });
-
-  // Handle Profile Update
-  const fetchUserProfile = async () => {
-
-    if (userId) {
-      dispatch(getUserProfile(userId));
-    } else {
-      console.log("No userId found, user might not be logged in.");
-    }
-
-  };
-
-  const handleLogout = () => {
-
-    setIsLogoutLoading(true);
+  const handleLogout = async () => {
     dispatch(logout());
-    AsyncStorage.clear();
-    setTimeout(() => {
-      navigation.replace("LoginScreen");
-    }, 1000);
+    await AsyncStorage.clear();
+    navigation.replace("LoginScreen");
   };
 
+  const menuItem = (icon, title, onPress) => (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+      <View style={styles.menuLeft}>
+        <Ionicons name={icon} size={22} color="#243B55" />
+        <Text style={styles.menuText}>{title}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color="#aaa" />
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={[styles.container, {
-      backgroundColor: COLORS.black
-    }]}>
-      <>
-        <LinearGradient colors={["#f0f0f0", "#FFF"]} style={styles.headContainer}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.iconContainer}
-          >
-            <Ionicons name="arrow-back" size={24} color={COLORS.white} />
-          </TouchableOpacity>
-          <View  >
-            {/* <Text
-              style={[Louis_George_Cafe.bold.h4, { color: COLORS.white, textAlign: "center" }]}>{"Profile"}</Text> */}
-          </View>
-        </LinearGradient>
-        <View style={styles.profileContainer}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Profile")}
-          >
-            <View
-              style={styles.profileImageContainer}
-            >
-              <Image source={{ uri: profileImage }} style={styles.profileImage} />
-              <Ionicons
-                name="pencil"
-                size={22}
-                color={COLORS.black}
-                style={[styles.cameraIcon, {
-                  backgroundColor: COLORS.button_bg_color
-                }]}
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView style={styles.safeContainer}>
+      <StatusBar barStyle="light-content" />
 
-        <View style={styles.infoContainer}>
-          <Text style={[Louis_George_Cafe.bold.h4, { color: COLORS.white }]}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* HEADER */}
+        <LinearGradient
+          colors={["#F0F0F0", "#FFF"]}
+          style={styles.header}
+        >
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={26} color="#000" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>Profile</Text>
+
+          <View style={{ width: 26 }} />
+        </LinearGradient>
+
+        {/* PROFILE SECTION */}
+        <View style={styles.profileSection}>
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={{
+                uri:
+                  profileImage ||
+                  "https://i.imgur.com/6VBx3io.png",
+              }}
+              style={[styles.avatar,{borderColor:COLORS.button_bg_color}]}
+            />
+
+            <TouchableOpacity
+              style={[styles.editIcon,{backgroundColor: COLORS.button_bg_color}]}
+              onPress={() => navigation.navigate("Profile")}
+            >
+              <Ionicons name="pencil" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={[styles.name, Louis_George_Cafe.bold.h4]}>
             {profile?.fullname}
           </Text>
-          <Text style={[Louis_George_Cafe.regular.h7, { color: COLORS.white }]}>
+
+          <Text style={[styles.email, Louis_George_Cafe.regular.h7]}>
             {profile?.email}
           </Text>
         </View>
-        <Divider style={{ marginVertical: hp(2) }} />
-      </>
 
-      <View style={{ paddingHorizontal: wp(5), marginVertical: hp(1) }}>
+        <Divider style={{ marginVertical: hp(3) }} />
 
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginVertical: hp(2),
-          }}
-          onPress={() => navigation.navigate("ChangePasswordScreen")
-          }
-        >
-          <Ionicons name="lock-closed-outline" size={24} color={COLORS.white} />
-          <Text
-            style={[
-              styles.questionsText,
-              Louis_George_Cafe.regular.h6,
-            ]}
-          >
-            Change Password
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginVertical: hp(2),
-          }}
-          onPress={() => navigation.navigate("WallpaperScreen")
-          }
-        >
-          <Ionicons name="image" size={24} color={COLORS.white} />
-          <Text
-            style={[
-              styles.questionsText,
-              Louis_George_Cafe.regular.h6,
-              {
-              },
-            ]}
-          >
-            Wallpaper
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginVertical: hp(1),
-          }}
-          onPress={() => navigation.navigate("BlcokedUserList")}
-        >
-          <Ionicons name="alert-circle-outline" size={24} color={COLORS.white} />
-          <Text
-            style={[
-              styles.announcementText,
-              Louis_George_Cafe.regular.h6,
-              {
-              },
-            ]}
-          >
-            Blocked Users
-          </Text>
-        </TouchableOpacity>
+        {/* MENU */}
+        <View style={styles.menuContainer}>
+          {menuItem("lock-closed-outline", "Change Password", () =>
+            navigation.navigate("ChangePasswordScreen")
+          )}
 
-        <TouchableOpacity
-          onPress={() => handleLogout()}
-          style={{
-            marginTop: wp(20),
-            backgroundColor: COLORS.button_bg_color,
-            width: wp(50),
-            justifyContent: "center",
-            alignSelf: "center",
-            padding: wp(2),
-            borderRadius: wp(10),
-            alignItems: "center",
-          }}
-        >
-          <Text
-            style={[
-              Louis_George_Cafe.bold.h6,
-              {
+          {menuItem("image-outline", "Wallpaper", () =>
+            navigation.navigate("WallpaperScreen")
+          )}
 
-                color: "white",
-                textAlign: "center", // Centers text horizontally
-                justifyContent: "center", // Aligns text vertically
-                alignItems: "center", // Aligns text vertically
-                width: "100%", // Ensures the text uses the full width
-              },
-            ]}
-          >
+          {menuItem("alert-circle-outline", "Blocked Users", () =>
+            navigation.navigate("BlcokedUserList")
+          )}
+        </View>
+
+        {/* LOGOUT BUTTON */}
+        <TouchableOpacity
+          style={[styles.logoutBtn,{backgroundColor:COLORS.button_bg_color}]}
+          onPress={handleLogout}
+        >
+          <Text style={[styles.logoutText, Louis_George_Cafe.bold.h6]}>
             Logout
           </Text>
         </TouchableOpacity>
-
-      </View>
-
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
+export default ProfileScreen;
+
 const styles = StyleSheet.create({
-  container: {
+  safeContainer: {
     flex: 1,
-    // backgroundColor: "#000",
+    backgroundColor: "#F4F6FA",
   },
-  headContainer: {
+
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
-  iconContainer: {
-    padding: wp(2)
-    // flex: 1,
-    // justifyContent: "center",
-    // alignItems: "center",
+
+  headerTitle: {
+    color: "#000",
+    fontSize: 18,
+    fontWeight: "600",
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
+
+  profileSection: {
     alignItems: "center",
-    backgroundColor: "#000",
+    marginTop: 30,
   },
-  profileContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: hp(2),
-  },
-  profileImageContainer: {
+
+  avatarWrapper: {
     position: "relative",
   },
-  profileImage: {
-    width: wp(25),
-    height: wp(25),
-    borderRadius: wp(12.5),
-    borderColor: COLORS.button_bg_color,
-    borderWidth: wp(0.6),
+
+  avatar: {
+    width: wp(28),
+    height: wp(28),
+    borderRadius: wp(14),
+    borderWidth: 3,
   },
-  cameraIcon: {
+
+  editIcon: {
     position: "absolute",
-    top: hp(8),
-    right: hp(0),
-    padding: wp(1),
-    borderRadius: wp(10),
+    bottom: 5,
+    right: 5,
+    padding: 6,
+    borderRadius: 20,
   },
-  infoContainer: {
+
+  name: {
+    marginTop: 15,
+    fontSize: 20,
+    color: "#222",
+  },
+
+  email: {
+    fontSize: 14,
+    color: "#777",
+    marginTop: 5,
+  },
+
+  menuContainer: {
+    paddingHorizontal: 20,
+  },
+
+  menuItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 10,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 15,
+    elevation: 3,
   },
 
-  announcementText: {
-    color: COLORS.white,
-    fontSize: hp(2),
-    marginLeft: wp(2),
+  menuLeft: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
-  questionsText: {
-    color: COLORS.white,
-    fontSize: hp(2),
-    marginLeft: wp(2),
+  menuText: {
+    marginLeft: 15,
+    fontSize: 15,
+    color: "#333",
+    fontWeight: "500",
+  },
+
+  logoutBtn: {
+    marginTop: 40,
+    marginBottom: 40,
+    marginHorizontal: 60,
+  
+    padding: 14,
+    borderRadius: 30,
+    alignItems: "center",
+  },
+
+  logoutText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
-
-export default ProfileScreen;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, Text, Alert } from 'react-native';
+import { SafeAreaView, Text, Alert, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import InitialRouter from './src/navigations/initial-router';
 import { WallpaperProvider } from './src/context/WallpaperContext';
+import { COLORS } from './src/resources/Colors';
 
 if (!firebase.apps.length) {
   firebase.initializeApp();
@@ -194,6 +195,7 @@ export default function App() {
       <WallpaperProvider>
         <SafeAreaProvider>
           <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
+            <StatusBar backgroundColor= {COLORS.button_bg_color}/>
             <InitialRouter />
             <Toast ref={(ref) => Toast.setRef(ref)} />
           </SafeAreaView>

@@ -130,7 +130,7 @@ const LoginScreen = () => {
 
   const handleForgot = () => {
 
-    navigation.navigate("ForgotPassword");
+    navigation.navigate("OtpPassword");
   };
 
   const handleRegister = () => {
@@ -157,7 +157,7 @@ const LoginScreen = () => {
 
       <TextInputComponent
         style={[styles.input, { backgroundColor: COLORS.input_background }]}
-        title="Enter Username or Email"
+        title="Enter Username or Phone"
         value={username}
         onChangeText={setUsername}
       />

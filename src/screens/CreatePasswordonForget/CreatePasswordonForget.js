@@ -16,7 +16,7 @@ import { wp } from "../../resources/dimensions";
 
 const CreatePasswordonForget = ({ navigation, route }) => {
   const dispatch = useDispatch();
-  const { emailParams } = route.params;
+  // const { emailParams } = route.params;
 
   const [otp, setOtp] = useState("");
   const [newPasscode, setNewPasscode] = useState("");
@@ -42,7 +42,7 @@ const CreatePasswordonForget = ({ navigation, route }) => {
   const handleChangePasscode = () => {
     setErrorAndLoading('')
     setLoading(true);
-    if (!otp) return setErrorAndLoading("OTP is required");
+    // if (!otp) return setErrorAndLoading("OTP is required");
     if (!newPasscode) return setErrorAndLoading("New password is required");
     // if (newPasscode.length < ) return setErrorAndLoading("New password must be at least 4 characters long");
     if (!confirmPasscode) return setErrorAndLoading("Please confirm your password");
@@ -89,7 +89,7 @@ const CreatePasswordonForget = ({ navigation, route }) => {
         Please enter your OTP, and new password below.
       </Text>
 
-      <TextInput
+      {/* <TextInput
         style={[styles.input, { color: COLORS.black, backgroundColor: COLORS.input_background }]}
         placeholder="OTP"
         value={otp}
@@ -97,7 +97,7 @@ const CreatePasswordonForget = ({ navigation, route }) => {
         keyboardType="numeric"
         placeholderTextColor={COLORS.placeholder}
         maxLength={6} // Assuming OTP length is 6
-      />
+      /> */}
 
       <View style={styles.passwordContainer}>
         <TextInput

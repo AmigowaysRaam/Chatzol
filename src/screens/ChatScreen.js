@@ -114,6 +114,14 @@ const ChatScreen = () => {
     }
   }, [userId]);
 
+
+//   useEffect(() => {
+//   if (messageList) {
+//     console.log("MESSAGE LIST 👉", messageList);
+//   }
+// }, []);
+
+
   // When the message list changes, format it and set it to chatMessages
   useEffect(() => {
 
@@ -132,6 +140,7 @@ const ChatScreen = () => {
               starred: item.starred,
               forwarded: item?.forwarded,
               image: item.image,
+              // audio: item.audio,
               sender: "me",
               timestamp: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
                 .toDate()
@@ -144,11 +153,13 @@ const ChatScreen = () => {
                 .toISOString(),
               text: item.receivedmessage,
               sender: "other",
+              // audio: item.audio,
               image: item.image,
               timestamp: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
                 .toDate()
                 .toISOString(),
             };
+            
           }
           return null;
         })
@@ -266,12 +277,12 @@ const ChatScreen = () => {
   };
   const [imageSelected, setSelectedPic] = useState({});
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      dispatch(getListMessages(userId, username));
-    }, 1000);
-    return () => clearInterval(intervalId); // Make sure to clear the interval on cleanup
-  }, [userId, username]); // Now this `useEffect` will run only when `userId` or `username` changes.
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     dispatch(getListMessages(userId, username));
+  //   }, 1000);
+  //   return () => clearInterval(intervalId); // Make sure to clear the interval on cleanup
+  // }, [userId, username]); // Now this `useEffect` will run only when `userId` or `username` changes.
 
 
   const handleSend = () => {
@@ -291,9 +302,9 @@ const ChatScreen = () => {
         userId: userId, msg: message, receiver_userid: touserId
       };
       // socket.send(JSON.stringify(data));
-      if (flatListRef) {
-        flatListRef?.current.scrollToEnd({ animated: true });
-      }
+      // if (flatListRef) {
+      //   flatListRef?.current.scrollToEnd({ animated: true });
+      // }
     }
   };
 
@@ -308,14 +319,14 @@ const ChatScreen = () => {
   };
 
 
-  useEffect(() => {
-    // alert(userId)
+  // useEffect(() => {
+  //   // alert(userId)
 
-    if (flatListRef) {
-      // console.log((flatListRef))
-      flatListRef?.current.scrollToEnd({ animated: true });
-    }
-  }, [userId])
+  //   if (flatListRef) {
+  //     // console.log((flatListRef))
+  //     flatListRef?.current.scrollToEnd({ animated: true });
+  //   }
+  // }, [userId])
 
 
   // Pull-to-refresh handler
@@ -400,10 +411,10 @@ const ChatScreen = () => {
         setImageUri(null);
         // setCaption("");
         // navigation.goBack();
-        if (flatListRef) {
-          // console.log((flatListRef))
-          flatListRef?.current.scrollToEnd({ animated: true });
-        }
+        // if (flatListRef) {
+        //   // console.log((flatListRef))
+        //   flatListRef?.current.scrollToEnd({ animated: true });
+        // }
       } else {
         // Alert.alert("Error", "Failed to upload story. Please try again.");
       }
@@ -494,15 +505,42 @@ const ChatScreen = () => {
                 messageSelectedArr.length !== 0 && messageSelectedArr.includes(item.messageid) &&
                 <MaterialIcons name={"check-circle"} size={22} style={[styles.nocon,]} color={item.position === "right" ? COLORS.black : COLORS.button_bg_color} />
               }
+              { item?.audio ? (
+               <View
+  style={{
+    alignSelf: item.position === "right" ? "flex-end" : "flex-start",
+    backgroundColor: item.position === "right" ? "#DCF8C6" : "#fff",
+    padding: 10,
+    borderRadius: 10,
+    marginVertical: 5,
+    maxWidth: "70%",
+    flexDirection: "row",
+    alignItems: "center"
+  }}
+>
+  <TouchableOpacity onPress={() => playAudio(item)}>
+    
+    {playingId === item.id ? (
+      <MaterialIcons name="stop-circle" size={36} color="black" />
+    ) : (
+      <MaterialIcons name="play-circle-fill" size={36} color="black" />
+    )}
 
-              {item?.image != '' ? (
+  </TouchableOpacity>
+
+  <Text style={{ marginLeft: 8 }}>Voice Message</Text>
+</View>
+
+  ):item?.image ? (
 
                 <View style={{
-                  backgroundColor: COLORS.button_bg_color,
+                  backgroundColor: item.position === "right" || luserName === username
+                              ? COLORS.button_bg_color
+                              : "#f1f0f0",
                   borderWidth: wp(0.4),
                   borderRadius: wp(2),
-                  borderColor: COLORS.button_bg_color,
-                }}>
+                  borderColor: COLORS.black,
+  }}>
                   <TouchableWithoutFeedback onLongPress={(e) => handleShowEmoji(item, e)} onPress={() => handleOpenImage(item?.image)}>
                     <Image
                       source={item?.image ? { uri: item?.image } : ""}
@@ -513,7 +551,10 @@ const ChatScreen = () => {
                     flexDirection: "row",
                     justifyContent: 'space-between'
                   }}>
-                    <Text style={{ fontSize: wp(2), margin: wp(2), color: "#FFF" }}>
+                    <Text style={{ fontSize: wp(2), margin: wp(2), color:
+                            item.position === "right" || luserName === username
+                              ? "#FFF"
+                              : "#000", }}>
                       {formatTimestamp(item.timestamp)}
                     </Text>
                     {
@@ -581,7 +622,7 @@ const ChatScreen = () => {
                 item.reaction !== ""
                 &&
                 //  item?.text == 'Hii' &&
-                <View style={{ alignSelf: "flex-end", position: "absolute", left: wp(0), top: hp(6), marginVertical: wp(1), backgroundColor: "#a8a8a8", borderRadius: wp(3), padding: wp(0.5) }}>
+                <View style={{ alignSelf: "flex-end", position: "absolute", right: wp(0), bottom: hp(-1.5), marginVertical: wp(1), backgroundColor: "#a8a8a8", borderRadius: wp(3), padding: wp(0.5) }}>
                   <Text style={{ fontSize: wp(2.5) }}>{item?.reaction}</Text>
                 </View>
               }
@@ -667,49 +708,170 @@ const ChatScreen = () => {
     }
   };
 
-  // Start Recording
-  const startRecording = async () => {
+  // // api Start Recording 
+  // const startRecording = async () => {
 
-    if (!isRecording) {
-      const path = `${RNFS.DocumentDirectoryPath}/Aud_${new Date().getTime()}.mp4`; // Unique filename based on timestamp
-      try {
-        await audioRecorderPlayer.startRecorder(path);
-        audioRecorderPlayer.addRecordBackListener((e) => {
-          setRecordingTime(audioRecorderPlayer.mmssss(e.current_position));
-        });
+  //   if (!isRecording) {
+  //     const path = `${RNFS.DocumentDirectoryPath}/Aud_${new Date().getTime()}.mp4`; // Unique filename based on timestamp
+  //     try {
+  //       await audioRecorderPlayer.startRecorder(path);
+  //       audioRecorderPlayer.addRecordBackListener((e) => {
+  //         setRecordingTime(audioRecorderPlayer.mmssss(e.current_position));
+  //       });
 
-        setIsRecording(true);
-        setAudioFile(path); // Store the path of the audio file
-      } catch (error) {
-        console.error("Error starting recorder: ", error);
-        Alert.alert('Error', JSON.stringify(error));
+  //       setIsRecording(true);
+  //       setAudioFile(path); // Store the path of the audio file
+  //     } catch (error) {
+  //       console.error("Error starting recorder: ", error);
+  //       Alert.alert('Error', JSON.stringify(error));
+  //     }
+  //   }
+  //   else {
+  //     stopRecording();
+  //   }
+  // };
+ // audio setup for the voice recording 
+const sendAudioMessage = async (filePath) => {
+
+  const apiUrl = "https://chatzol.scriptzol.in/api/?url=app-send-message";
+
+  const formData = new FormData();
+
+  formData.append("userid", userId);
+  formData.append("message", "audio");
+  formData.append("tousername", username);
+
+  formData.append("audio", {
+    uri: filePath,
+    type: "audio/mp4",
+    name: `voice_${Date.now()}.mp4`,
+  });
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Refresh messages from server
+      dispatch(getListMessages(userId, username));
+      dispatch(getListConversation(userId));
+    }
+
+  } catch (error) {
+    console.log("Audio upload error:", error);
+  }
+};
+
+const [playingId, setPlayingId] = useState(null);
+
+const playAudio = async (item) => {
+  try {
+    if (playingId === item.id) {
+      await audioRecorderPlayer.stopPlayer();
+      audioRecorderPlayer.removePlayBackListener();
+      setPlayingId(null);
+      return;
+    }
+
+    if (playingId) {
+      await audioRecorderPlayer.stopPlayer();
+      audioRecorderPlayer.removePlayBackListener();
+    }
+
+    setPlayingId(item.id);
+
+    await audioRecorderPlayer.startPlayer(item.audio);  // 👈 local path
+
+    audioRecorderPlayer.addPlayBackListener((e) => {
+      if (e.current_position === e.duration) {
+        audioRecorderPlayer.stopPlayer();
+        audioRecorderPlayer.removePlayBackListener();
+        setPlayingId(null);
       }
-    }
-    else {
-      stopRecording();
-    }
-  };
+    });
 
-  // Stop Recording
-  const stopRecording = async () => {
-    if (isRecording) {
-      try {
-        await audioRecorderPlayer.stopRecorder();
-        audioRecorderPlayer.removeRecordBackListener();
-        setIsRecording(false);
-        // Store the audio file path in your stored files list for later access
-        setStoredAudioFiles((prevFiles) => [...prevFiles, audioFile]);
-        // Alert.alert('Recording Stopped', `Audio file saved at ${audioFile}`);
-        ToastAndroid.show('Recording Stopped', ToastAndroid.SHORT);
-      } catch (error) {
-        console.error("Error stopping recorder: ", error);
-        Alert.alert('Error', 'Failed to stop recording');
-      }
-    }
-    else {
-      startRecording();
-    }
-  };
+  } catch (error) {
+    console.log("Play error:", error);
+  }
+};
+
+
+// api integration stop recording
+// const stopRecording = async () => {
+//   try {
+//     const result = await audioRecorderPlayer.stopRecorder();
+//     audioRecorderPlayer.removeRecordBackListener();
+//     setIsRecording(false);
+
+//     // Send to API
+//     await sendAudioMessage(result);
+
+//   } catch (error) {
+//     console.log("Stop recording error:", error);
+//   }
+// };
+
+
+// local stoprecording
+const stopRecording = async () => {
+  try {
+    const result = await audioRecorderPlayer.stopRecorder();
+    audioRecorderPlayer.removeRecordBackListener();
+    setIsRecording(false);
+
+    const audioMessage = {
+      id: Date.now().toString(),
+      messageid: Date.now().toString(),
+      audio: result,      // local file path
+      text: "",
+      image: "",
+      position: "right",
+      timestamp: new Date().toISOString(),
+    };
+
+    setChatMessages(prev => [...prev, audioMessage]);
+
+  } catch (error) {
+    console.log("Stop recording error:", error);
+  }
+};
+
+
+
+// local startrecording
+const startRecording = async () => {
+  try {
+    const path =
+      Platform.OS === 'android'
+        ? `${RNFS.DocumentDirectoryPath}/audio_${Date.now()}.mp4`
+        : `audio_${Date.now()}.m4a`;
+
+    await audioRecorderPlayer.startRecorder(path);
+
+    audioRecorderPlayer.addRecordBackListener((e) => {
+      setRecordingTime(
+        audioRecorderPlayer.mmssss(Math.floor(e.current_position))
+      );
+    });
+
+    setIsRecording(true);
+
+  } catch (error) {
+    console.log("Error starting recorder:", error);
+  }
+};
+
+
+
+
+
   const emojiList = ['👍', '❤️', '😂', '😢', '😲'];
 
   const fnForwardMessage = () => {
@@ -957,21 +1119,26 @@ const ChatScreen = () => {
 
           </LinearGradient>
 
-          <FlatList
-            ref={flatListRef}
-            data={chatMessages}
-            // renderItem={}
-            renderItem={({ item }) => renderMessage({
-              item, handleAlertDelete, handleShowEmoji, handleLayout,
-              handleSelectMessages,
-              handleOpenImage
-            })}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.messagesContainer}
-            keyboardShouldPersistTaps="handled"
-            onRefresh={onRefresh} // Trigger refresh when user pulls down
-            refreshing={refreshing} // Show the loading indicator during refresh
-          />
+<FlatList
+  ref={flatListRef}
+  data={[...chatMessages].reverse()}      
+  inverted={true}
+  renderItem={({ item }) =>
+    renderMessage({
+      item,
+      handleAlertDelete,
+      handleShowEmoji,
+      handleLayout,
+      handleSelectMessages,
+      handleOpenImage
+    })
+  }
+  keyExtractor={(item) => item.id.toString()}
+  contentContainerStyle={styles.messagesContainer}
+  keyboardShouldPersistTaps="handled"
+  onRefresh={onRefresh}
+  refreshing={refreshing}
+/>
 
           <Toast zIndex={1} />
 
@@ -1196,7 +1363,7 @@ const ChatScreen = () => {
                 ]}
               >
                 {/* Close Button */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   onPress={() => setShowReactionModal(false)}
                   style={{
                     position: 'absolute',
@@ -1207,7 +1374,7 @@ const ChatScreen = () => {
                   }}
                 >
                   <Icon name="close-circle" size={34} color="#FFF" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 {/* Emoji List */}
                 <FlatList
                   showsHorizontalScrollIndicator={false}
@@ -1314,7 +1481,7 @@ const styles = StyleSheet.create({
     height: hp(100),
   },
   emoji: {
-    fontSize: wp(4),
+    fontSize: wp(5),
     marginBottom: wp(2),
     marginHorizontal: wp(1),
   },
@@ -1340,8 +1507,9 @@ const styles = StyleSheet.create({
     margin: wp(1)
   },
   stickerImage: {
-    width: wp(40),
-    height: wp(40),
+    width: wp(35),
+    height: wp(50),
+    marginTop:wp(1),
     resizeMode: 'contain',
     // borderWidth: wp(0.4),
     // borderRadius: wp(2),
