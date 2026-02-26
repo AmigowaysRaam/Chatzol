@@ -441,7 +441,7 @@ const fnPinChat = () => {
       ]}>
 
         <Image
-          source={item.avatar ? { uri: item.avatar } : ""}
+          source={item.avatar ? { uri: item.avatar } : require('../../assets/nodp.jpg')}
           style={styles.avatar}
         />
 
@@ -774,7 +774,7 @@ const HeaderComponent = (profile) => {
       >
         <Icon name="add" size={24} color={COLORS.white} />
       </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={{
             borderWidth: wp(0.5),
             borderColor: "#a020cb",
@@ -785,11 +785,11 @@ const HeaderComponent = (profile) => {
           onPress={() => { handleNavigateSettingScreen() }}
         >
           <Icon name="settings" size={wp(6)} color={COLORS.white} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         
 
         <TouchableOpacity onPress={() => { handleNavigateProfileScreen() }}>
-          <Image source={profile?.profile?.profilepicture ? { uri: profile?.profile?.profilepicture } : ""} style={{
+          <Image source={profile?.profile?.profilepicture ? { uri: profile?.profile?.profilepicture } : require('../../assets/nodp.jpg')} style={{
             width: wp(8),
             height: wp(8),
             borderRadius: wp(6),
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
     height: wp(12.5),
     borderRadius: wp(6.25),
     borderColor: COLORS.button_bg_color,
-    borderWidth: wp(0.5),
+    borderWidth: wp(0.4),
     marginRight: wp(2),
   },
 

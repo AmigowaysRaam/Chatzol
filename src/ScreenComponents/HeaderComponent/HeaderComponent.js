@@ -15,28 +15,31 @@ import { useNavigation } from "@react-navigation/native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { hp, wp } from "../../resources/dimensions";
 import { LinearGradient } from "expo-linear-gradient";
+import { COLORS } from "../../resources/Colors";
 
-const HeaderBar = () => {
+const HeaderBar = ({title='',showBackArrow=false , showClose=false}) => {
   const navigation = useNavigation();
 
   const HeaderComponent = () => (
-    <LinearGradient colors={["#252525", "#000"]} style={styles.headContainer}>
+    <LinearGradient colors={["#F0F0F0", "#FFF"]} style={styles.headContainer}>
+      {showBackArrow &&
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         style={styles.iconContainer}
       >
         <MaterialIcons name="arrow-back" size={24} color={COLORS.white} />
       </TouchableOpacity>
-      <View style={styles.textContainer}>
-        <Text style={styles.headingName}>Header Bar</Text>
-      </View>
+}
+      
+        <Text style={styles.headerTitle}>{title}</Text>
+        {showClose &&
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+                  <MaterialIcons name="close" size={26} color="#000" style={{position:'absolute', top:-wp(4), left:wp(60)}} />
+                </TouchableOpacity>
+}
+      
 
-      <TouchableOpacity style={styles.settingsBtn}>
-        <MaterialIcons name="settings" size={28} color={COLORS.white} />
-      </TouchableOpacity>
-      <TouchableOpacity>
-        <MaterialIcons name="person" size={28} color={COLORS.white} />
-      </TouchableOpacity>
+    
     </LinearGradient>
   );
 
@@ -47,8 +50,9 @@ const styles = StyleSheet.create({
   headContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: wp(5),
-    gap: wp(4),
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(2),
+    elevation: 3,
   },
   iconContainer: {
     marginRight: wp(3),
@@ -67,6 +71,11 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     alignItems: "center",
+  },
+   headerTitle: {
+    fontSize: wp(5),
+    fontWeight: "600",
+    marginLeft: wp(4),
   },
 });
 

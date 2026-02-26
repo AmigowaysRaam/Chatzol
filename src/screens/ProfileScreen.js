@@ -119,7 +119,7 @@ const ProfileScreen = () => {
 
         {/* LOGOUT BUTTON */}
         <TouchableOpacity
-          style={[styles.logoutBtn,{backgroundColor:COLORS.button_bg_color}]}
+          style={[styles.logoutBtn,{backgroundColor:COLORS.black}]}
           onPress={handleLogout}
         >
           <Text style={[styles.logoutText, Louis_George_Cafe.bold.h6]}>

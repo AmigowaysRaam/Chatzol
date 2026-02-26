@@ -44,7 +44,7 @@ const PublicProfile = () => {
     const [canSendMessages, setCanSendMessages] = useState(userItem.muted == '1');
     const [selectedImage, setSelectedImage] = useState(null);
 
-    // 🔥 Fetch Chat Media (Images Only)
+    //  Fetch Chat Media (Images Only)
     useEffect(() => {
         if (userId && userItem?.username) {
             fetchChatMedia();

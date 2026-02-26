@@ -159,14 +159,38 @@ const GroupChatScreen = () => {
     setIsModalVisible(false);
   };
 
-  const handleOpenDialogBox = (item, e) => {
-    // Get the location of the press
-    const { pageX, pageY } = e.nativeEvent;
+  const [selectedMessage, setSelectedMessage] = useState(null);
+ const handleOpenDialogBox = (item, e) => {
+  const { pageX, pageY } = e.nativeEvent;
+  setModalPosition({ x: pageX, y: pageY });
+  setSelectedMessage(item);   // ✅ store message
+  setIsModalVisible(true);
+};
+const handleReaction = (emoji) => {
+  if (!selectedMessage) return;
 
-    // Set the popup location to the coordinates of the tap
-    setModalPosition({ x: pageX, y: pageY });
-    setIsModalVisible(true);
-  }
+  const updatedMessages = chatMessages.map((msg) => {
+    if (msg.id === selectedMessage.id) {
+      
+      //  If same reaction clicked → remove it
+      if (msg.reaction === emoji) {
+        return { ...msg, reaction: "" };
+      }
+
+      //  If different reaction → replace it
+      return { ...msg, reaction: emoji };
+    }
+
+    return msg;
+  });
+
+  setChatMessages(updatedMessages);
+
+  // Optional: send to backend
+  // dispatch(sendReaction(userId, selectedMessage.messageid, emoji));
+
+  closeModal();
+};
 
   const handleSendSticker = (stickerUrl) => {
 
@@ -208,39 +232,42 @@ const GroupChatScreen = () => {
   useEffect(() => {
     if (groupMessageList && groupMessageList.length) {
       const formattedMessages = groupMessageList
-        .map((item) => {
-          if (item.message?.length > 0) {
-            return {
-              id: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
-                .toDate()
-                .toISOString(),
-              text: item.message,
-              messageid: item.messageid,
-              position: item.position,
-              sender: "me",
-              username: item.username,
-              userimage: item.userimage,
-              timestamp: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
-                .toDate()
-                .toISOString(),
-            };
-          } else if (item.receivedmessage) {
-            return {
-              id: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
-                .toDate()
-                .toISOString(),
-              text: item.receivedmessage,
-              username: item.username,
-              userimage: item.userimage,
-              sender: "other",
-              timestamp: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
-                .toDate()
-                .toISOString(),
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
+  .map((item) => {
+    if (item.message?.length > 0) {
+      return {
+        id: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
+          .toDate()
+          .toISOString(),
+        text: item.message,
+        messageid: item.messageid,
+        position: item.position,
+        sender: "me",
+        username: item.username,
+        userimage: item.userimage,
+        reaction: item.reaction || "",   // ✅ ADD THIS
+        timestamp: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
+          .toDate()
+          .toISOString(),
+      };
+    } else if (item.receivedmessage) {
+      return {
+        id: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
+          .toDate()
+          .toISOString(),
+        text: item.receivedmessage,
+        username: item.username,
+        userimage: item.userimage,
+        position: item.position,
+        reaction: item.reaction || "",   // ✅ ADD THIS
+        sender: "other",
+        timestamp: moment(item.createddatetime, "MMMM DD, YYYY h:mm A")
+          .toDate()
+          .toISOString(),
+      };
+    }
+    return null;
+  })
+  .filter(Boolean);
       setChatMessages(formattedMessages);
     }
   }, [groupMessageList]);
@@ -373,6 +400,14 @@ const GroupChatScreen = () => {
             }
 
           </View>
+          {
+                          item.position !== "right" &&
+                          item.reaction &&
+                          //  item?.text == 'Hii' &&
+                          <View style={{ alignSelf: "flex-end", position: "absolute", right: wp(0), bottom: hp(-1.5), marginVertical: wp(1), backgroundColor: "#a8a8a8", borderRadius: wp(3), padding: wp(0.5) }}>
+                            <Text style={{ fontSize: wp(2.5) }}>{item.reaction}</Text>
+                          </View>
+                        }
 
         </View>
       </TouchableOpacity>
@@ -584,12 +619,12 @@ const GroupChatScreen = () => {
 
   return (
     <ImageBackground
-      source={wallpaper ? { uri: wallpaper ? wallpaper : "" } : ""}
+      source={wallpaper ? { uri: wallpaper ? wallpaper : "" } : require('../assets/chatbg.jpg')}
       style={styles.imageBackground}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={[styles.container, {
-          backgroundColor: wallpaper === null && COLORS.black,
+          // backgroundColor: wallpaper === null && COLORS.black,
         }]}>
           <LinearGradient
             colors={["#F0F0F0", "#FFF"]}
@@ -736,17 +771,15 @@ const GroupChatScreen = () => {
                     }}
                     horizontal={true}
                     data={emojiList}
-                    keyExtractor={(item) => item._id}
+                  keyExtractor={(item) => item.id}
                     style={{ paddingLeft: wp(2), flex: 1, marginHorizontal: wp(0), }}
                     renderItem={({ item }) => (
-                      <TouchableOpacity onPress={() => handleSendSticker(item)} style={{ marginTop: wp(0.5) }}>
+                      <TouchableOpacity onPress={() => handleReaction(item)} style={{ marginTop: wp(0.5),  backgroundColor: "transparent",  // always transparent
+    opacity: selectedMessage?.reaction === item ? 1 : 0.5, }}>
                         <Text style={styles.emoji}>{item}</Text>
                       </TouchableOpacity>
                     )}
                   />
-                  <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                    <Icon name="close" size={30} color="#fff" />
-                  </TouchableOpacity>
                 </View>
               </View>
             </TouchableWithoutFeedback>
@@ -780,9 +813,9 @@ const styles = StyleSheet.create({
     padding: wp(1)
   },
   emoji: {
-    fontSize: wp(4),
+    fontSize: wp(5),
     marginBottom: wp(2),
-    marginHorizontal: wp(1),
+    marginHorizontal: wp(2),
   },
 
   profilePic: {

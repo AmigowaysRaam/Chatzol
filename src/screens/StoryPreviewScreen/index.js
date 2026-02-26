@@ -230,19 +230,26 @@ const StoryPreviewScreen = ({ route, navigation }) => {
         </View>
       </LinearGradient>
 
-      <View style={[styles.progressContainer, { width: "100%" }]}>
-        <Animated.View
-          style={[
-            styles.progressBar,
-            {
-              width: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [`0%`, '100%'],
-              }),
-            },
-          ]}
-        />
-      </View>
+    <View style={[styles.progressContainer, { width: "100%" }]}>
+  <Animated.View
+    style={{
+      width: progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0%', '100%'],
+      }),
+      height: '100%',
+      overflow: 'hidden', // important for clipping
+      borderRadius: 10,   // optional for rounded corners
+    }}
+  >
+      <LinearGradient
+  colors={['#a020cb', '#FF6A00',]} // start with #a020cb and transition to a lighter purple
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 0 }}
+  style={{ flex: 1 }}
+/>
+  </Animated.View>
+</View>
 
       <View style={styles.storyContainer}>
         <TouchableOpacity
@@ -333,7 +340,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
-    backgroundColor: COLORS.button_bg_color,
+    backgroundColor: COLORS.white,
   },
   likeIconContainer: {
     backgroundColor: "#DDD",

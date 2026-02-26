@@ -7,6 +7,7 @@ import {
     SafeAreaView,
     FlatList,
     Image,
+    Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -28,6 +29,9 @@ const CallHistory = () => {
     const navigation = useNavigation();
     const dispatch = useDispatch();
     const userId = useSelector((state) => state.auth.user?._id);
+    const [statusText,setStatusText] = useState(null);
+     
+
     
     useEffect(() => {
         fetchCalls();
@@ -44,7 +48,8 @@ const CallHistory = () => {
                 else {
                     setLoading(false)
                 }
-            })
+            }),
+          
         );
         setLoading(false)
     }
@@ -60,15 +65,21 @@ const CallHistory = () => {
     );
 
     const renderCallItem = useCallback(({ item }) => {
-        const isOutgoing = item.offer === true;
-        const isMissed = item?.missed ?? !item.callEnded;
+        const isOutgoing = item.dialled === 1;
+        const isMissed = item?.received ?? !item.callEnded;
         const type = isOutgoing ? "outgoing" : "incoming";
         const iconName = type === "incoming" ? (isMissed ? "phone-missed" : "phone-incoming") : "phone-outgoing";
         const iconColor = isMissed ? "#E74C3C" : "#4CAF50";
-        const statusText = isMissed ? "Missed" : (type === "incoming" ? "Received" : "Outgoing");
+         const statusText = isMissed ? "Missed" : (type === "incoming" ? "Received" : "Outgoing");
+        
+        
 
         return (
-            <TouchableOpacity style={styles.userItem}>
+            <View>
+                <Text>
+                    {/* {JSON.stringify(item,null,2)} */}
+                </Text>
+                  <TouchableOpacity style={styles.userItem}>
                 <Image source={{ uri: item?.image || "https://via.placeholder.com/100" }} style={styles.profilePic} />
                 <View style={styles.usernameContainer}>
                     <Text numberOfLines={1} style={[Louis_George_Cafe.bold.h6, { color: COLORS.white, textTransform: "capitalize" }]}>
@@ -83,6 +94,9 @@ const CallHistory = () => {
                 </View>
                 <MaterialCommunityIcons name={iconName} size={24} color={iconColor} />
             </TouchableOpacity>
+            </View>
+           
+           
         );
     }, []);
 
@@ -140,8 +154,8 @@ const styles = StyleSheet.create({
         paddingVertical: hp(1.5),
         paddingHorizontal: wp(4),
         backgroundColor: "#fff",
-        marginHorizontal: wp(2),
-        marginVertical: hp(0.5),
+        marginHorizontal: wp(1),
+        
     },
 
     usernameContainer: {

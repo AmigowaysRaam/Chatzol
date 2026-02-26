@@ -43,6 +43,7 @@ import OwnStatusView from "../screens/OwnStatusView/OwnStatusView";
 import CallScreen from "../screens/CallScreen";
 import AnswerCallScreen from "../screens/AnswerCallScreen";
 import OtpPassword from "../screens/OtpPassword";
+import BiometricScreen from "../screens/BiometricScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -100,6 +101,7 @@ function InitialRouter() {
         <Stack.Screen name="BlcokedUserList" component={BlcokedUserList} />
         <Stack.Screen name="CallScreen" component={CallScreen} />
         <Stack.Screen name="AnswerCallScreen" component={AnswerCallScreen} />
+        <Stack.Screen name='BiometricScreen' component={BiometricScreen} />
         <Stack.Screen
           name="StoryPreviewScreen"
           component={StoryPreviewScreen}

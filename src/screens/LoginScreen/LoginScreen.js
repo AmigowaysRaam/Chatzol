@@ -18,8 +18,8 @@ const LoginScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const [username, setUsername] = useState(__DEV__ ? "gow" : "");
-  const [password, setPassword] = useState(__DEV__ ? "1212" : "");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated, error, lerror } = useSelector((state) => state.auth);
@@ -62,10 +62,15 @@ const LoginScreen = () => {
     setIsLoading(true);
     const credentials = { username, password, fcmtoken };
     dispatch(loginUser(credentials, fcmtoken, (response) => {
-      if (response) {
-        AsyncStorage.setItem('user_data', JSON.stringify(response));
-        setIsLoading(false);
-      }
+     // After login response
+if (response) {
+   AsyncStorage.setItem("user_data", JSON.stringify(response));
+   AsyncStorage.setItem("fingerprintEnabled", "true"); // enable fingerprint for next time
+  navigation.reset({
+    index: 0,
+    routes: [{ name: "HomeScreen" }],
+  });
+}
       else {
         setIsLoading(false);
       }
@@ -96,24 +101,29 @@ const LoginScreen = () => {
     return () => { };
   }, []);
 
+
+ const [fromBiometric, setFromBiometric] = useState(false);
   useEffect(() => {
-    if (isAuthenticated) {
-      const saveLoginDetails = async () => {
-        try {
-          await AsyncStorage.setItem('username', username);
-          await AsyncStorage.setItem('password', password);
-        } catch (error) {
-          console.error("Failed to save login details:", error);
-        }
-      };
-      saveLoginDetails();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "HomeScreen" }],
-      });
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
+  if (isAuthenticated && !fromBiometric) {
+    // Only navigate automatically if not coming from biometric screen
+    const saveLoginDetails = async () => {
+      try {
+        await AsyncStorage.setItem('username', username);
+        await AsyncStorage.setItem('password', password);
+      } catch (error) {
+        console.error("Failed to save login details:", error);
+      }
+    };
+    saveLoginDetails();
+
+    setIsLoading(false);
+    // navigate manually only after normal login
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "HomeScreen" }],
+    });
+  }
+}, [isAuthenticated]);
 
   useEffect(() => {
     if (lerror) {

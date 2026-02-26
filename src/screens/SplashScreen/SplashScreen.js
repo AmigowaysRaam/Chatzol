@@ -23,14 +23,20 @@ const Splash = () => {
     }
   };
 
-  const navigateAfterCheck = async () => {
-    const userData = await getUserData();
-    if (userData || isAuthenticated) {
-      navigation.replace("HomeScreen");
+ const navigateAfterCheck = async () => {
+  const userData = await getUserData(); // returns user_data from AsyncStorage
+  const fingerprintEnabled = await AsyncStorage.getItem("fingerprintEnabled");
+
+  if (userData || isAuthenticated) {
+    if (fingerprintEnabled === "true") {
+      navigation.replace("BiometricScreen"); // ask fingerprint first
     } else {
-      navigation.navigate("LoginScreen");
+      navigation.replace("HomeScreen"); // go home if fingerprint disabled
     }
-  };
+  } else {
+    navigation.replace("LoginScreen"); // first-time login
+  }
+};
 
   const checkVersion = async () => {
     try {

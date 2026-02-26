@@ -3,7 +3,7 @@ import {
   View, Text, Image, FlatList, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView,
   Platform, TouchableWithoutFeedback,
-  Keyboard, Modal, ImageBackground,
+  Keyboard, Modal, ImageBackground,PermissionsAndroid,
   Alert, ToastAndroid
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -28,6 +28,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import ImageCropPicker from "react-native-image-crop-picker";
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { makeCall } from '../services/webrtc';
+import { Video, ResizeMode } from "expo-av";
 
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
@@ -67,6 +68,7 @@ const ChatScreen = () => {
   const [layout, setLayout] = useState(null);
   const flatListRef = useRef(); // Reference for FlatList
   const [wsMessage, setWsMessage] = useState('');  // WebSocket message state
+  const [activeVideoId, setActiveVideoId] = useState(null);
 
   const onFocusHandler = () => {
     dispatch(updateUserStatus(userId, "online"));
@@ -83,7 +85,7 @@ const ChatScreen = () => {
       onFocusHandler();
       // Cleanup function when unfocused
       return () => {
-        // Component is unfocused
+        // Component is unfocused   
         onBlurHandler();
       };
     }, [])
@@ -120,6 +122,18 @@ const ChatScreen = () => {
 //     console.log("MESSAGE LIST 👉", messageList);
 //   }
 // }, []);
+
+
+useEffect(() => {
+  if (chatMessages.length > 0) {
+    setTimeout(() => {
+      flatListRef.current?.scrollToOffset({
+        offset: 0,
+        animated: false,
+      });
+    }, 100);
+  }
+}, []);
 
 
   // When the message list changes, format it and set it to chatMessages
@@ -163,7 +177,8 @@ const ChatScreen = () => {
           }
           return null;
         })
-        .filter(Boolean);
+        .filter(Boolean)
+       //  .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       setChatMessages(formattedMessages);
       setisLoading(false)
     }
@@ -347,33 +362,112 @@ const ChatScreen = () => {
   const handleOpenDialogBox = () => {
     setIsModalVisible(true);
   }
-  const openGallery = () => {
-    launchImageLibrary(
-      {
-        mediaType: "photo",
-        quality: 1,
-        includeBase64: false,
-      },
-      (response) => {
-        if (response.didCancel) {
-          // console.log("User cancelled image picker");
-        } else if (response.errorCode) {
-          console.log("ImagePicker Error: ", response.errorMessage);
-        } else {
-          ImageCropPicker.openCropper({
-            path: response.assets[0].uri,
-            width: 800,
-            height: 1200,
-          }).then((image) => {
-            setImageUri(image?.path);
-            handleCreateStory(image?.path);
-            // alert(image?.path)
-
-          });
-        }
+const openGallery = () => {
+  launchImageLibrary(
+    {
+      mediaType: "mixed",      
+      selectionLimit: 10,      
+      videoQuality: "medium",
+      durationLimit: 60,
+    },
+    (response) => {
+      if (response.didCancel) return;
+      if (response.errorCode) {
+        console.log("Picker Error:", response.errorMessage);
+        return;
       }
-    );
+
+      const selectedFiles = response.assets;
+
+      handleMultipleMedia(selectedFiles);
+    }
+  );
+};
+
+
+const handleLocalVideo = (videoUri) => {
+  const videoMessage = {
+    id: Date.now().toString(),
+    messageid: Date.now().toString(),
+    video: videoUri,
+    text: "",
+    image: "",
+    audio: "",
+    position: "right",
+    timestamp: new Date().toISOString(),
   };
+
+  setChatMessages(prev => [...prev, videoMessage]);
+};
+
+const handleMultipleMedia = async (files) => {
+  for (const file of files) {
+    const isVideo = file.type?.startsWith("video");
+
+    if (isVideo) {
+      // video local
+      const videoMessage = {
+        id: Date.now().toString(),
+        messageid: Date.now().toString(),
+        text: "",
+        video: file.uri,
+        image: "",
+        audio: "",
+        position: "right",
+        timestamp: new Date().toISOString(),
+      };
+
+      setChatMessages(prev => [...prev, videoMessage]);
+
+    } else {
+      // image backend
+      await sendImageToBackend(file.uri);
+    }
+  }
+};
+const sendImageToBackend = async (imageUri) => {
+  console.log("Uploading image:", imageUri);
+
+  const apiUrl = "https://chatzol.scriptzol.in/api/?url=app-send-message";
+
+  const formData = new FormData();
+  formData.append("userid", userId);
+  formData.append("message", ""); // sometimes backend expects empty message
+  formData.append("tousername", username);
+
+  formData.append("image", {
+    uri: Platform.OS === "android" ? imageUri : imageUri.replace("file://", ""),
+    type: "image/jpeg",
+    name: `image_${Date.now()}.jpg`,
+  });
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      body: formData,
+    });
+
+    const text = await response.text();
+    console.log("Raw Response:", text);
+
+    const result = JSON.parse(text);
+
+    if (result.success) {
+      console.log("Upload Success ✅");
+      dispatch(getListMessages(userId, username));
+    } else {
+      console.log("Upload Failed ❌", result);
+    }
+  } catch (error) {
+    console.log("Image upload error ❌", error);
+  }
+};
+
+
+
 
   const handleCreateStory = async (image) => {
 
@@ -464,7 +558,8 @@ const ChatScreen = () => {
           }
           onLayout={handleLayout}
           onLongPress={() => handleSelectMessages(item)}
-          style={{ backgroundColor: messageSelectedArr.includes(item.messageid) ? "#cf8fe5" : COLORS.black }}>
+        style={{ backgroundColor: messageSelectedArr.includes(item.messageid) ? '#cf8fe580' : '' }}
+        >
           <TouchableOpacity
             onPress={() => messageSelectedArr.length !== 0 &&
               handleSelectMessages(item)
@@ -506,6 +601,7 @@ const ChatScreen = () => {
                 <MaterialIcons name={"check-circle"} size={22} style={[styles.nocon,]} color={item.position === "right" ? COLORS.black : COLORS.button_bg_color} />
               }
               { item?.audio ? (
+                <View>
                <View
   style={{
     alignSelf: item.position === "right" ? "flex-end" : "flex-start",
@@ -513,7 +609,7 @@ const ChatScreen = () => {
     padding: 10,
     borderRadius: 10,
     marginVertical: 5,
-    maxWidth: "70%",
+    maxWidth: "100%",
     flexDirection: "row",
     alignItems: "center"
   }}
@@ -527,9 +623,64 @@ const ChatScreen = () => {
     )}
 
   </TouchableOpacity>
+   {playingId === item.id ? (
+    <View>
+   <LottieView
+                        speed={3}
+                        source={require("../assets/animations/recording.json")}
+                        style={{ width: wp(72), height: hp(4) }}
+                        autoPlay
+                        loop={true}
+                      />
+              <Text >
+  {playingId === item.id ? playTime : item.duration || "00:00"}
+</Text>         
+                      </View>
+   ):(
 
-  <Text style={{ marginLeft: 8 }}>Voice Message</Text>
+ <Text style={{ marginLeft: 8 }}>
+  {playingId === item.id ? playTime : item.duration || "00:00"}
+</Text>
+
+   )}
+   
+ </View>
+ <View style={[{
+                    flexDirection: "row",justifyContent:'flex-end'
+                  }]}>
+                    <Text
+                      style={[
+                        styles.timestamp,
+                        // Louis_George_Cafe.regular.h9,
+                        {
+                          fontSize: wp(2),
+                          color:
+                            item.position === "right" || luserName === username
+                              ? "#FFF"
+                              : "#000",
+                        },
+                      ]}
+                    >
+                      {formatTimestamp(item.timestamp)}
+                    </Text>
+                    {
+                      item.position == "right" &&
+                      <Text style={{ position: "relative", top: wp(2), left: wp(2), color: "#FFF" }}>
+                        <MaterialIcons name={"check"} size={12} style={[styles.nocon,]} color={item.position === "right" ?? COLORS.black} />
+                      </Text>
+                    }
+
+                    {
+                      item?.starred == "1" &&
+                      <MaterialCommunityIcons name={"star"} size={14} style={[{
+                        marginTop: wp(1.5),
+                        marginLeft: wp(2),
+                        justifyContent: 'flex-end',
+                      }]} color={item.position === "right" ? COLORS.black : "#777"} />
+                    }
+                  </View>
 </View>
+
 
   ):item?.image ? (
 
@@ -565,7 +716,60 @@ const ChatScreen = () => {
                     }
                   </View>
                 </View>
-              ) : (
+              ): item?.video ? (
+  <View
+    style={{
+      backgroundColor:
+        item.position === "right"
+          ? COLORS.button_bg_color
+          : "#f1f0f0",
+     borderWidth: wp(0.4),
+                  borderRadius: wp(2),
+                  borderColor: COLORS.black
+    }}
+  >
+    <Video
+      source={{ uri: item.video }}
+      style={{
+        width: wp(70),
+        height: hp(28),
+        borderRadius: wp(2),
+        backgroundColor: "#000",
+      }}
+      useNativeControls
+      resizeMode={ResizeMode.CONTAIN}
+      shouldPlay={activeVideoId === item.id}
+      isLooping={false}
+      onPlaybackStatusUpdate={(status) => {
+        if (status.didJustFinish) {
+          setActiveVideoId(null);
+        }
+      }}
+      onLoadStart={() => setActiveVideoId(null)}
+      onTouchStart={() => setActiveVideoId(item.id)}
+    />
+
+    <View style={{
+                    flexDirection: "row",
+                    justifyContent: 'space-between'
+                  }}>
+                    <Text style={{ fontSize: wp(2), margin: wp(2), color:
+                            item.position === "right" || luserName === username
+                              ? "#FFF"
+                              : "#000", }}>
+                      {formatTimestamp(item.timestamp)}
+                    </Text>
+                    {
+                      item.position == 'right' &&
+                      <Text style={{ position: "relative", top: wp(2), left: hp(0), color: "#000", fontSize: wp(1), marginHorizontal: wp(2) }}>
+                        <MaterialIcons name={"check"} size={14} style={[styles.nocon,]} color={COLORS.black} />
+                      </Text>
+                    }
+                  </View>
+  </View>
+)
+
+              : (
                 <>
                   <Text style={
                     [{
@@ -730,6 +934,7 @@ const ChatScreen = () => {
   //     stopRecording();
   //   }
   // };
+
  // audio setup for the voice recording 
 const sendAudioMessage = async (filePath) => {
 
@@ -769,7 +974,10 @@ const sendAudioMessage = async (filePath) => {
   }
 };
 
+
+
 const [playingId, setPlayingId] = useState(null);
+const [playTime, setPlayTime] = useState("00:00");
 
 const playAudio = async (item) => {
   try {
@@ -777,6 +985,7 @@ const playAudio = async (item) => {
       await audioRecorderPlayer.stopPlayer();
       audioRecorderPlayer.removePlayBackListener();
       setPlayingId(null);
+      setPlayTime("00:00");
       return;
     }
 
@@ -787,20 +996,32 @@ const playAudio = async (item) => {
 
     setPlayingId(item.id);
 
-    await audioRecorderPlayer.startPlayer(item.audio);  // 👈 local path
+    await audioRecorderPlayer.startPlayer(item.audio);
 
     audioRecorderPlayer.addPlayBackListener((e) => {
-      if (e.current_position === e.duration) {
-        audioRecorderPlayer.stopPlayer();
-        audioRecorderPlayer.removePlayBackListener();
-        setPlayingId(null);
-      }
-    });
+
+  if (!e.currentPosition || !e.duration) return;
+
+  const current = audioRecorderPlayer.mmssss(
+    Math.floor(e.currentPosition)
+  );
+
+  setPlayTime(current);
+
+  if (e.currentPosition >= e.duration) {
+    audioRecorderPlayer.stopPlayer();
+    audioRecorderPlayer.removePlayBackListener();
+    setPlayingId(null);
+    setPlayTime("00:00");
+  }
+});
+
 
   } catch (error) {
     console.log("Play error:", error);
   }
 };
+
 
 
 // api integration stop recording
@@ -826,22 +1047,27 @@ const stopRecording = async () => {
     audioRecorderPlayer.removeRecordBackListener();
     setIsRecording(false);
 
+    const duration = recordingTime; // already mm:ss
+
     const audioMessage = {
       id: Date.now().toString(),
       messageid: Date.now().toString(),
-      audio: result,      // local file path
+      audio: result,
       text: "",
       image: "",
       position: "right",
       timestamp: new Date().toISOString(),
+      duration: duration, // 👈 add this
     };
 
     setChatMessages(prev => [...prev, audioMessage]);
+    setRecordingTime("00:00");
 
   } catch (error) {
     console.log("Stop recording error:", error);
   }
 };
+
 
 
 
@@ -857,7 +1083,7 @@ const startRecording = async () => {
 
     audioRecorderPlayer.addRecordBackListener((e) => {
       setRecordingTime(
-        audioRecorderPlayer.mmssss(Math.floor(e.current_position))
+        audioRecorderPlayer.mmssss(Math.floor(e.currentPosition))
       );
     });
 
@@ -917,7 +1143,7 @@ const startRecording = async () => {
       await audioRecorderPlayer.startPlayer(destinationPath);
 
       audioRecorderPlayer.addPlayBackListener((e) => {
-        if (e.current_position === e.duration) {
+        if (e.currentPosition === e.duration) {
           audioRecorderPlayer.stopPlayer();
           Alert.alert('Playback Finished', 'Test audio has finished playing');
         }
@@ -1026,18 +1252,18 @@ const startRecording = async () => {
 
   return (
     <ImageBackground
-      source={wallpaper ? { uri: wallpaper ? wallpaper : "" } : ""}
+      source={wallpaper ? { uri: wallpaper ? wallpaper : require('../assets/chatbg.jpg') } : require('../assets/chatbg.jpg')}
       style={styles.imageBackground}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={[styles.container, {
-          backgroundColor: wallpaper === null && COLORS.black,
+          // backgroundColor: wallpaper === null && COLORS.black
         }]}>
           <LinearGradient
             colors={["#F0F0F0", "#FFF"]
             }
             style={{
-              marginTop: wp(1), padding: wp(1), paddingTop: wp(2),
+               padding: wp(1), paddingTop: wp(2),
               paddingHorizontal: wp(1)
             }}
           >
@@ -1115,13 +1341,14 @@ const startRecording = async () => {
               }
 
             </View>
-            <View style={{ height: 1, backgroundColor: "#9999", marginTop: wp(1) }} />
+            {/* <View style={{ height: 1, backgroundColor: "#9999", marginTop: wp(1) }} /> */}
 
           </LinearGradient>
 
 <FlatList
   ref={flatListRef}
-  data={[...chatMessages].reverse()}      
+   data={[...chatMessages].reverse()}  
+  //data={chatMessages}    
   inverted={true}
   renderItem={({ item }) =>
     renderMessage({
@@ -1146,7 +1373,7 @@ const startRecording = async () => {
             behavior={Platform.OS === "ios" ? "padding" : "height"}>
             {
               allowMessage == 1 &&
-              <View style={{ flexDirection: "row", backgroundColor: "#F0F0F0", paddingTop: wp(2) }}>
+              <View style={{ flexDirection: "row",}}>
                 <View style={styles.noContainer}>
                   {
                     isRecording ?
@@ -1269,7 +1496,7 @@ const startRecording = async () => {
                   data={users}
                   onEndReached={() => {
                     if (!isLoading && hasMore) {
-                      setPage(prevPage => prevPage + 1);
+                      setPage(prevPage => prevPage + 1);  
                     }
                   }}
 
@@ -1463,21 +1690,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
     marginLeft: wp(1),
+    backgroundColor: "#fff",
     borderRadius: wp(5),
     paddingHorizontal: 10,
     width: wp(86),
-
     borderColor: '#838383',
     borderWidth: wp(0.5),
     marginBottom: wp(2),
     marginVertical: wp(0.5)
+
   },
   container: {
     flex: 1,
   },
   imageBackground: {
     flex: 1,
-    resizeMode: "cover",
     height: hp(100),
   },
   emoji: {
@@ -1647,3 +1874,4 @@ const styles = StyleSheet.create({
 });
 
 export default ChatScreen;
+
