@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Image
+  Image,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { COLORS } from "../../resources/Colors";
@@ -19,41 +19,34 @@ import { useNavigation } from "@react-navigation/native";
 import Feather from "@expo/vector-icons/Feather";
 import { Avatar, Checkbox } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
-import ButtonComponent from "../../components/Button/Button";
 import { launchImageLibrary } from "react-native-image-picker";
-import { getCommiunityList, getGroupList, getListConversation } from "../../redux/authActions";
+import { getCommiunityList, getGroupList } from "../../redux/authActions";
 import Toast from "react-native-toast-message";
+import HeaderBar from "../../ScreenComponents/HeaderComponent/HeaderComponent";
 
 const NewCommunity = () => {
-
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
   const [searchTerm, setSearchTerm] = useState("");
   const groupList = useSelector((state) => state.auth.groupList || []);
   const [selectedGroup, setselectedGroup] = useState([]);
-
   const [communityName, setCommunityName] = useState("");
-  const [bio, setBio] = useState(""); // State for bio
-  const [groupImage, setGroupImage] = useState(null); // State for group image
+  const [bio, setBio] = useState("");
+  const [groupImage, setGroupImage] = useState(null);
   const userId = useSelector((state) => state.auth.user?._id);
   const [isLoading, setIsLoading] = useState(false);
 
   // Filter users based on search term
-  const filteredUsers = groupList.data ? groupList?.data.filter(user =>
-    user?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  const filteredUsers = groupList.data
+    ? groupList.data.filter((user) =>
+        user?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   useEffect(() => {
-    // alert(JSON.stringify(groupList))
-    fetchConversations();
-  }, [userId]);
-
-  const fetchConversations = () => {
-    // alert(JSON.stringify(groupList))
     dispatch(getGroupList(userId));
-  };
-
+  }, [userId]);
 
   const toggleSelection = (userId) => {
     setselectedGroup((prevSelected) =>
@@ -64,296 +57,242 @@ const NewCommunity = () => {
   };
 
   const handleCreateCommunity = async () => {
-    setIsLoading(true);
-
     if (!communityName.trim()) {
       alert("Please enter a community name.");
-      setIsLoading(false);
+      return;
+    }
+    if (selectedGroup.length === 0) {
+      alert("Please select at least one group.");
       return;
     }
 
+    setIsLoading(true);
     const formData = new FormData();
-    formData.append('name', communityName);
-    formData.append('userid', userId);
-    formData.append('groupsid', selectedGroup);
-    formData.append('bio', bio);
+    formData.append("name", communityName);
+    formData.append("userid", userId);
+    formData.append("groupsid", selectedGroup);
+    formData.append("bio", bio);
+    if (groupImage) {
+      const filename = groupImage.split("/").pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : "image";
+      formData.append("image", { uri: groupImage, name: filename, type });
+    }
 
-    const response = await fetch('https://chatzol.scriptzol.in/api/?url=app-create-community', {
-      method: 'POST',
-      body: formData,
-    });
+    try {
+      const response = await fetch(
+        "https://chatzol.scriptzol.in/api/?url=app-create-community",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      const data = await response.json();
 
-    const data = await response.json();
-
-
-    if (data.success) {
-      // Dispatch actions for success
+      if (data.success) {
+        Toast.show({
+          text1: "Success!",
+          text2: data?.message,
+          type: "success",
+          position: "top",
+        });
+        dispatch(getCommiunityList(userId));
+        setTimeout(() => {
+          navigation.goBack();
+        }, 1500);
+      } else {
+        Toast.show({
+          text1: "Error!",
+          text2: data.message,
+          type: "error",
+          position: "top",
+        });
+      }
+    } catch (error) {
       Toast.show({
-        text1: 'Success!',
-        text2: data?.message,
-        type: 'success',
-        position: 'top',
+        text1: "Error!",
+        text2: "Something went wrong.",
+        type: "error",
+        position: "top",
       });
-
-      // Update state and navigate
-      setIsLoading(false);
-      dispatch(getCommiunityList(userId));
-      setTimeout(() => {
-        navigation.goBack();
-      }, 1500);
-    } else {
-      // Handle error from response
-      Toast.show({
-        text1: 'Error!',
-        text2: data.message,
-        type: 'error',
-        position: 'top',
-      });
+    } finally {
       setIsLoading(false);
     }
   };
 
-
   const pickImage = () => {
-    const options = {
-      mediaType: 'photo',
-      includeBase64: false,
-    };
-
+    const options = { mediaType: "photo", includeBase64: false };
     launchImageLibrary(options, (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
-      } else {
-        setGroupImage(response.assets[0].uri);
-      }
+      if (response.didCancel) return;
+      if (response.error) return console.log("ImagePicker Error: ", response.error);
+      setGroupImage(response.assets[0].uri);
     });
-
   };
 
-  const HeaderComponent = ({ onBackPress }) => (
-    <LinearGradient colors={["#f0f0f0", "#FFF"]} style={styles.headContainer}>
-      <TouchableOpacity onPress={onBackPress}>
-        <MaterialIcons name="arrow-back" size={28} color={COLORS.white} />
-      </TouchableOpacity>
-      <View style={styles.textContainer}>
-        <Text style={[styles.headingName, Louis_George_Cafe.bold.h2, { color: COLORS.white }]}>
-          New Community
-        </Text>
-      </View>
-
-    </LinearGradient>
-  );
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <HeaderComponent onBackPress={() => navigation.goBack()} />
+      <HeaderBar title="New Community" showBackArrow/>
 
-      <View style={[styles.header, { backgroundColor: "#ebecf1" }]}>
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            paddingVertical: wp(4),
-          }}
-        >
-          <Feather
-            name="camera"
-            onPress={pickImage}
-            size={24}
-            style={{
-              backgroundColor: COLORS.search_bg_color,
-              padding: wp(3),
-              marginHorizontal: wp(4),
-              borderRadius: wp(7),
-            }}
-            color={COLORS.button_bg_color}
-          />
-          <TextInput
-            style={{
-              backgroundColor: COLORS.black,
-              width: wp(75),
-              paddingVertical: wp(2),
-              paddingHorizontal: wp(5),
-              borderRadius: wp(2),
-              color: COLORS.white,
-            }}
-            placeholder="Community Name"
-            placeholderTextColor={COLORS.white}
-            value={communityName}
-            onChangeText={setCommunityName}
-          />
+      {/* Community Info Card */}
+      <View style={styles.infoCard}>
+        <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
+          {groupImage ? (
+            <Image source={{ uri: groupImage }} style={styles.image} />
+          ) : (
+            <Feather name="camera" size={28} color={COLORS.white} />
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            paddingVertical: wp(4),
-          }}
-        >
-          <TextInput
-            style={{
-              backgroundColor: COLORS.black,
-              width: wp(75),
-              paddingVertical: wp(2),
-              paddingHorizontal: wp(5),
-              borderRadius: wp(2),
-              color: COLORS.white,
-              marginLeft: wp(20)
-            }}
-            placeholder="Bio"
-            placeholderTextColor={COLORS.white}
-            value={bio}
-            onChangeText={setBio}
-            multiline
-          />
-        </TouchableOpacity>
+        <TextInput
+          style={styles.communityNameInput}
+          placeholder="Community Name"
+          placeholderTextColor={COLORS.gray}
+          value={communityName}
+          onChangeText={setCommunityName}
+        />
 
-        {groupImage && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: wp(2) }}>
-            <Image
-              source={{ uri: groupImage }}
-              style={{ width: wp(20), height: wp(20), borderRadius: 8 }}
-              accessibilityLabel="Community Image"
-              onError={() => console.log("Image failed to load")}
-            />
-            <TouchableOpacity
-              onPress={() => setGroupImage(null)}
-              accessibilityLabel="Remove community image"
-              style={{ marginLeft: wp(1) }}
-            >
-              <MaterialIcons name="close" size={28} color={COLORS.white} />
-            </TouchableOpacity>
-          </View>
-        )}
+        <TextInput
+          style={styles.bioInput}
+          placeholder="Bio"
+          placeholderTextColor={COLORS.gray}
+          value={bio}
+          onChangeText={setBio}
+          multiline
+        />
       </View>
 
-      <Toast />
+      {/* Search Users */}
+      <View style={styles.searchContainer}>
+        <MaterialIcons name="search" size={24} color={COLORS.gray} />
+        <TextInput
+          style={styles.searchInput}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          placeholder="Search users..."
+          placeholderTextColor={COLORS.gray}
+        />
+      </View>
 
-      {/* FlatList goes here without wrapping in KeyboardAvoidingView */}
+      {/* Users List */}
       <FlatList
-        data={filteredUsers || []}
-        ListHeaderComponent={
-          <View style={[styles.searchContainer, { backgroundColor: "#ebecf1" }]}>
-            <TouchableOpacity style={styles.iconContainer}>
-              <MaterialIcons name="search" size={24} color={COLORS.white} />
-            </TouchableOpacity>
-            <TextInput
-              style={styles.textInput}
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-              placeholder="Search..."
-              placeholderTextColor={COLORS.white}
-              color={COLORS.white}
-            />
-          </View>
-        }
-        keyExtractor={(item) => Math.random() + item._id}
+        data={filteredUsers}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={{ paddingBottom: hp(15) }}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => toggleSelection(item._id)}>
-            <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: wp(1) }}>
-              <Checkbox
-                color={COLORS.button_bg_color}
-                status={selectedGroup.includes(item._id) ? "checked" : "unchecked"}
-              />
-              <Avatar.Image
-                size={48}
-                style={{ marginStart: wp(2) }}
-                source={{ uri: item.image }}
-              />
-              <Text style={[styles.headingName, Louis_George_Cafe.medium.h7, { color: COLORS.white, marginStart: wp(4) }]}>
-                {item.name}
-              </Text>
-            </View>
+          <TouchableOpacity
+            onPress={() => toggleSelection(item._id)}
+            style={[
+              styles.userItem,
+              selectedGroup.includes(item._id) && styles.userSelected,
+            ]}
+          >
+            <Avatar.Image size={48} source={{ uri: item.image }} />
+            <Text style={styles.userName}>{item.name}</Text>
+            <Checkbox
+              color={COLORS.button_bg_color}
+              status={selectedGroup.includes(item._id) ? "checked" : "unchecked"}
+            />
           </TouchableOpacity>
         )}
       />
 
-      {
-        selectedGroup.length !== 0 ?
-          // <ButtonComponent title={"Create Community"}  isLoading={isLoading} />
-          <TouchableOpacity
-            onPress={handleCreateCommunity}
-            style={{
-              backgroundColor: COLORS.button_bg_color, padding: wp(2), width: wp(60), height: hp(5), borderRadius: wp(10), marginVertical: wp(5), marginTop: wp(2), justifyContent: "center",
-              alignItems: "center",
-            }}>
-            {/* <ActivityIndicator color="#FFF" /> */}
-            <Text style={[styles.headingName, Louis_George_Cafe.bold.h8, { color: COLORS.black, alignItems: "center", textAlign: "center" }]}>
-              {"Create Community"}
-            </Text>
-          </TouchableOpacity>
+      {/* Create Community Button */}
+      <TouchableOpacity
+        onPress={handleCreateCommunity}
+        style={[
+          styles.createButton,
+          (!communityName || selectedGroup.length === 0 || isLoading) && styles.buttonDisabled,
+        ]}
+        disabled={!communityName || selectedGroup.length === 0 || isLoading}
+      >
+        <Text style={styles.buttonText}>{isLoading ? "Creating..." : "Create Community"}</Text>
+      </TouchableOpacity>
 
-          : <View style={{
-            backgroundColor: "#ebecf1", padding: wp(2), width: wp(60), height: hp(5), borderRadius: wp(10), marginVertical: wp(5), marginTop: wp(2), justifyContent: "center",
-            alignItems: "center",
-          }}>
-            {/* <ActivityIndicator color="#FFF" /> */}
-            <Text style={[styles.headingName, Louis_George_Cafe.bold.h8, { color: COLORS.white, alignItems: "center", textAlign: "center" }]}>
-              {"Choose Group"}
-            </Text>
-          </View>
-
-      }
-
-
+      <Toast />
     </KeyboardAvoidingView>
   );
 };
 
 export default NewCommunity;
 
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.black,
-    padding: wp(1),
-  },
-  header: {
-    width: "100%",
-    marginHorizontal: wp(4),
-    paddingVertical: wp(2),
-    borderRadius: wp(2),
-    marginVertical: wp(2),
-  },
+  container: { flex: 1, backgroundColor: COLORS.black },
   headContainer: {
     flexDirection: "row",
     alignItems: "center",
     padding: hp(2),
-    width: wp(100)
+    width: wp(100),
   },
-  textContainer: {
-    marginLeft: wp(5),
+  textContainer: { marginLeft: wp(5) },
+  headingName: { maxWidth: wp(70) },
+  infoCard: {
+    margin: wp(4),
+    padding: wp(4),
+    borderRadius: wp(3),
+    backgroundColor: "#f1f3f6",
+    alignItems: "center",
   },
-
-  textInput: {
-    flex: 1,
+  imagePicker: {
+    width: wp(20),
+    height: wp(20),
+    borderRadius: wp(10),
+    backgroundColor: "#ddd",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: wp(3),
   },
-  iconContainer: {
-    marginRight: wp(4),
+  image: { width: "100%", height: "100%", borderRadius: wp(10) },
+  communityNameInput: {
+    width: "100%",
+    backgroundColor: "#fff",
+    color: COLORS.white,
+    padding: wp(3),
+    borderRadius: wp(2),
+    marginBottom: wp(2),
+  },
+  bioInput: {
+    width: "100%",
+    backgroundColor: "#fff",
+    color: COLORS.white,
+    padding: wp(3),
+    borderRadius: wp(2),
+    minHeight: hp(10),
+    textAlignVertical: "top",
   },
   searchContainer: {
     flexDirection: "row",
-    alignSelf: "center",
     alignItems: "center",
-    justifyContent: "center",
-    width: wp(98),
-    height: hp(5),
+    backgroundColor: "#eee",
     borderRadius: wp(50),
-    paddingHorizontal: wp(2),
+    paddingHorizontal: wp(4),
+    marginHorizontal: wp(4),
+    marginVertical: wp(2),
+  },
+  searchInput: { flex: 1, color: COLORS.white, paddingVertical: wp(2) },
+  userItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: wp(3),
+    marginHorizontal: wp(4),
     marginVertical: wp(1),
-    marginBottom: wp(4),
+    borderRadius: wp(2),
+    backgroundColor: "#f1f3f6",
   },
-  headingName: {
-    maxWidth: wp(70)
-    // Define your text styles here
+  userSelected: { backgroundColor: "#333333" },
+  userName: { flex: 1, marginLeft: wp(3), color: COLORS.white },
+  createButton: {
+    position: "absolute",
+    bottom: hp(2),
+    alignSelf: "center",
+    backgroundColor: COLORS.button_bg_color,
+    paddingVertical: wp(3),
+    paddingHorizontal: wp(10),
+    borderRadius: wp(10),
   },
+  buttonText: { color: COLORS.black, fontWeight: "bold" },
+  buttonDisabled: { backgroundColor: COLORS.button_bg_color },
 });

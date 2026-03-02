@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View,  Text,  Image,  StyleSheet,  TouchableOpacity,  SafeAreaView,  StatusBar,  ScrollView,} from "react-native";
+import { View,  Text,  Image,  StyleSheet,  TouchableOpacity,  SafeAreaView,  StatusBar,  ScrollView, Alert,} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Divider } from "react-native-paper";
@@ -36,11 +36,31 @@ const ProfileScreen = () => {
     setProfileImage(profile?.profilepicture);
   }, [profile?.profilepicture]);
 
-  const handleLogout = async () => {
+  const handlelogout = async () => {
     dispatch(logout());
     await AsyncStorage.clear();
     navigation.replace("LoginScreen");
   };
+
+  const handleLogout = async ()=> {
+        Alert.alert(
+          "Are you sure?",
+          "Do you want to Logout?",
+          [
+            {
+              text: "No", // No button
+              onPress: () => console.log("Cancel Pressed"),
+              style: "cancel",
+            },
+            
+            {
+              text: "Yes", // Yes button
+              onPress: () => handlelogout(),
+            },
+          ],
+          { cancelable: false } // Prevent closing the alert by clicking outside
+        );
+  }
 
   const menuItem = (icon, title, onPress) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress}>
@@ -51,6 +71,8 @@ const ProfileScreen = () => {
       <Ionicons name="chevron-forward" size={20} color="#aaa" />
     </TouchableOpacity>
   );
+
+
 
   return (
     <SafeAreaView style={styles.safeContainer}>
@@ -75,11 +97,14 @@ const ProfileScreen = () => {
         <View style={styles.profileSection}>
           <View style={styles.avatarWrapper}>
             <Image
-              source={{
-                uri:
-                  profileImage ||
-                  "https://i.imgur.com/6VBx3io.png",
-              }}
+              // source={{
+              //   uri:
+              //     profileImage ||
+              //     "https://i.imgur.com/6VBx3io.png",
+              // }}
+              source={
+                  profileImage 
+              }
               style={[styles.avatar,{borderColor:COLORS.button_bg_color}]}
             />
 
@@ -115,14 +140,18 @@ const ProfileScreen = () => {
           {menuItem("alert-circle-outline", "Blocked Users", () =>
             navigation.navigate("BlcokedUserList")
           )}
+          {menuItem("trash-outline", "Delete Account", () =>
+            navigation.navigate("DeleteAccount")
+          )}
         </View>
 
         {/* LOGOUT BUTTON */}
         <TouchableOpacity
-          style={[styles.logoutBtn,{backgroundColor:COLORS.black}]}
+          style={[styles.logoutBtn,{backgroundColor:COLORS.black,flexDirection:'row',justifyContent:"center"}]}
           onPress={handleLogout}
         >
-          <Text style={[styles.logoutText, Louis_George_Cafe.bold.h6]}>
+          <Ionicons name="log-out-outline" size={22} color="#243B55" />
+          <Text style={[styles.logoutText, Louis_George_Cafe.bold.h6,{marginLeft:wp(2)}]}>
             Logout
           </Text>
         </TouchableOpacity>

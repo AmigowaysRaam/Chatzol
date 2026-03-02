@@ -1,193 +1,243 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
-import Toast from 'react-native-toast-message'; // Import Toast
-import { useDispatch } from "react-redux";
-import { createPasswordOnForget } from "../../redux/authActions";
-import ButtonComponent from "../../components/Button/Button";
+import {  View,  Text,  TextInput,  TouchableOpacity,  StyleSheet,  KeyboardAvoidingView,  Platform,} from "react-native";
+import { wp, hp } from "../../resources/dimensions";
 import { COLORS } from "../../resources/Colors";
-import { wp } from "../../resources/dimensions";
+import { useDispatch, useSelector } from "react-redux";
+import { changePassword } from "../../redux/authActions";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
+import HeaderBar from "../../ScreenComponents/HeaderComponent/HeaderComponent";
 
-const CreatePasswordonForget = ({ navigation, route }) => {
+
+  const InputField = ({
+    label,
+    value,
+    onChangeText,
+    secure,
+    toggleSecure,
+    show,
+  }) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{label}</Text>
+
+      <View style={styles.inputWrapper}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={!show}
+          style={styles.input}
+          placeholder={`Enter ${label}`}
+          placeholderTextColor="#777"
+        />
+
+        <TouchableOpacity onPress={toggleSecure}>
+          <Ionicons
+            name={show ? "eye-off-outline" : "eye-outline"}
+            size={22}
+            color="#aaa"
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+
+const ChangePasscode = () => {
   const dispatch = useDispatch();
-  // const { emailParams } = route.params;
+  const navigation = useNavigation();
 
-  const [otp, setOtp] = useState("");
+  const profile = useSelector((state) => state.auth.profile);
+
+  const [oldPasscode, setOldPasscode] = useState("");
   const [newPasscode, setNewPasscode] = useState("");
   const [confirmPasscode, setConfirmPasscode] = useState("");
-  const [passcodeError, setPasscodeError] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setLoading] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleToggleNewPassword = () => {
-    setShowNewPassword(prevState => !prevState);
-  };
-
-  const handleToggleConfirmPassword = () => {
-    setShowConfirmPassword(prevState => !prevState);
-  };
-
-  const setErrorAndLoading = (errorMessage) => {
-    setPasscodeError(errorMessage);
-    setLoading(false);
-  };
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleChangePasscode = () => {
-    setErrorAndLoading('')
     setLoading(true);
-    // if (!otp) return setErrorAndLoading("OTP is required");
-    if (!newPasscode) return setErrorAndLoading("New password is required");
-    // if (newPasscode.length < ) return setErrorAndLoading("New password must be at least 4 characters long");
-    if (!confirmPasscode) return setErrorAndLoading("Please confirm your password");
-    if (newPasscode !== confirmPasscode) return setErrorAndLoading("New password does not match");
 
-    setPasscodeError("");
+    if (!oldPasscode || !newPasscode || !confirmPasscode) {
+      setError("All fields are required");
+      setLoading(false);
+      return;
+    }
+
+    if (newPasscode.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
+
+    if (newPasscode !== confirmPasscode) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    setError("");
+
     const payload = {
-      emailParams,
-      otp,
+      currentpassword: oldPasscode,
       password: newPasscode,
+      userid: profile._id,
     };
 
     dispatch(
-      createPasswordOnForget(payload, (response) => {
+      changePassword(payload, (response) => {
         setLoading(false);
+
         if (response.success) {
           Toast.show({
-            text1: 'Success',
-            text2: response.message,
-            type: 'success',
+            type: "success",
+            text1: "Password Updated",
+            text2: response.message || "Your password was changed successfully",
           });
 
-          setTimeout(() => {
-            navigation.navigate("LoginScreen");
-          }, 1000);
+          setTimeout(() => navigation.goBack(), 1200);
         } else {
-          setErrorAndLoading(response.message);
+          setError(response.message || "Failed to change password");
           Toast.show({
-            text1: 'Error',
+            type: "error",
+            text1: "Error",
             text2: response.message,
-            type: 'error',
           });
         }
       })
     );
   };
 
+
   return (
-    <View style={[styles.container, { backgroundColor: COLORS.black }]}>
-      <Text style={[styles.title, { color: COLORS.white }]}>
-        Create Password
-      </Text>
-      <Text style={[styles.description, { color: COLORS.white }]}>
-        Please enter your OTP, and new password below.
-      </Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : null}
+    >
+      {/* Header */}
+      <HeaderBar title="Change Password" showBackArrow/>
 
-      {/* <TextInput
-        style={[styles.input, { color: COLORS.black, backgroundColor: COLORS.input_background }]}
-        placeholder="OTP"
-        value={otp}
-        onChangeText={setOtp}
-        keyboardType="numeric"
-        placeholderTextColor={COLORS.placeholder}
-        maxLength={6} // Assuming OTP length is 6
-      /> */}
+      {/* Card */}
+      <View style={styles.card}>
+        <Text style={styles.subtitle}>
+          Update your password to keep your account secure.
+        </Text>
 
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={[styles.input, { color: COLORS.black, backgroundColor: COLORS.input_background }]}
-          placeholder="New Password"
+        <InputField
+          label="New Password"
           value={newPasscode}
           onChangeText={setNewPasscode}
-          secureTextEntry={!showNewPassword}
-          placeholderTextColor={COLORS.placeholder}
+          show={showNew}
+          toggleSecure={() => setShowNew(!showNew)}
         />
-        <TouchableOpacity onPress={handleToggleNewPassword} style={styles.eyeIcon}>
-          <MaterialIcons
-            name={showNewPassword ? "visibility-off" : "visibility"}
-            size={24}
-            color={COLORS.placeholder}
-          />
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={[styles.input, { color: COLORS.black, backgroundColor: COLORS.input_background }]}
-          placeholder="Confirm Password"
+        <InputField
+          label="Confirm Password"
           value={confirmPasscode}
           onChangeText={setConfirmPasscode}
-          secureTextEntry={!showConfirmPassword}
-          placeholderTextColor={COLORS.placeholder}
+          show={showConfirm}
+          toggleSecure={() => setShowConfirm(!showConfirm)}
         />
-        <TouchableOpacity onPress={handleToggleConfirmPassword} style={styles.eyeIcon}>
-          <MaterialIcons
-            name={showConfirmPassword ? "visibility-off" : "visibility"}
-            size={24}
-            color={COLORS.placeholder}
-          />
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.button, isLoading && { opacity: 0.7 }]}
+          onPress={handleChangePasscode}
+          disabled={isLoading}
+        >
+          <Text style={styles.buttonText}>
+            {isLoading ? "Updating..." : "Update Password"}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {passcodeError ? (
-        <Text style={{ color: COLORS.validation, marginHorizontal: wp(5) }}>
-          {passcodeError}
-        </Text>
-      ) : null}
-
-      <View style={{ alignItems: "center" }}>
-        <ButtonComponent
-          title={"Create Password"}
-          isLoading={isLoading}
-          onPress={handleChangePasscode}
-        />
-      </View>
-      <Text>
-        <Toast ref={(ref) => Toast.setRef(ref)} /> {/* Initialize Toast */}
-      </Text>
-    </View>
+      <Toast />
+    </KeyboardAvoidingView>
   );
 };
+
+export default ChangePasscode;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    padding: 20,
+    backgroundColor: "#fff",
   },
-  title: {
-    marginBottom: 20,
-    textAlign: "center",
-    fontSize: 24,
-  },
-  description: {
-    marginBottom: wp(10),
-    textAlign: "center",
-    fontSize: 16,
-  },
-  input: {
-    height: wp(10),
-    width: '100%',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: wp(5),
-    marginBottom: wp(5)
+    paddingTop: hp(6),
   },
-  passwordContainer: {
-    position: 'relative',
+
+  headerTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
   },
-  eyeIcon: {
-    position: 'absolute',
-    right: 10,
-    top: 12,
+
+  card: {
+    marginTop: hp(6),
+    marginHorizontal: wp(6),
+    backgroundColor: "#e7caf0",
+    borderRadius: 20,
+    padding: wp(6),
+  },
+
+  subtitle: {
+    color: "#661480",
+    fontSize: 13,
+    marginBottom: hp(3),
+  },
+
+  inputContainer: {
+    marginBottom: hp(2),
+  },
+
+  label: {
+    color: "#661480",
+    fontSize: 13,
+    marginBottom: hp(0.8),
+  },
+
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E8EAED",
+    borderRadius: 12,
+    paddingHorizontal: wp(4),
+  },
+
+  input: {
+    flex: 1,
+    color: "#000",
+    height: hp(6),
+  },
+
+  error: {
+    color: "#FF4D4D",
+    marginTop: hp(1),
+    fontSize: 13,
+  },
+
+  button: {
+    marginTop: hp(3),
+    backgroundColor: COLORS.button_bg_color,
+    paddingVertical: hp(1.8),
+    borderRadius: 14,
+    alignItems: "center",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
-
-export default CreatePasswordonForget;

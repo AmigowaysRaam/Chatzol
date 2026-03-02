@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   captionContainer: { position: "absolute", bottom: hp(15), left: wp(4), right: wp(4) },
   captionInput: { backgroundColor: "rgba(0,0,0,0.5)", color: "#fff", padding: hp(1.2), borderRadius: wp(8), fontSize: wp(4) },
   removeButton: { backgroundColor: "rgba(0,0,0,0.6)", padding: wp(2), borderRadius: wp(4) },
-  galleryWrapper: { backgroundColor: "transparent", paddingVertical: hp(1), paddingLeft: wp(2) },
+  galleryWrapper: { backgroundColor: "transparent", paddingVertical: hp(1), paddingLeft: wp(2),marginBottom:wp(10) },
   expandButton: { position: "absolute", right: wp(45), top: -hp(6), backgroundColor: "rgba(0,0,0,0.6)", padding: wp(1), borderRadius: wp(4), zIndex: 10 },
   galleryItem: { marginRight: wp(2) },
   selectedImage: { borderWidth: 2, borderColor: "#25D366" },

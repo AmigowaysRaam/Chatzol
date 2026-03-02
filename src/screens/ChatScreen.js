@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  View, Text, Image, FlatList, TextInput, TouchableOpacity,
+import React, { useState, useEffect, useRef ,useCallback} from "react";
+import {  View, Text, Image, FlatList, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView,
   Platform, TouchableWithoutFeedback,
-  Keyboard, Modal, ImageBackground,PermissionsAndroid,
+  Keyboard, Modal, ImageBackground,PermissionsAndroid,Pressable,
   Alert, ToastAndroid
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -30,22 +29,18 @@ import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-
 import { makeCall } from '../services/webrtc';
 import { Video, ResizeMode } from "expo-av";
 
-
 const audioRecorderPlayer = new AudioRecorderPlayer();
-
 const ChatScreen = () => {
 
   const navigation = useNavigation();
   const profile = useSelector((state) => state.auth.profile);
-
   const route = useRoute();
-  const { username, firstname, touserId, userProfileImage, muted } = route.params;
+ const { username, firstname,touserId,userProfileImage,muted,unreadcount = 0,} = route.params || {};
   const [message, setMessage] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
   const [refreshing, setRefreshing] = useState(false);  // State for pull-to-refresh
   const [isLoading, setisLoading] = useState(true);
   const { wallpaper } = useWallpaper()
-
   const [isModalVisible, setIsModalVisible] = useState(false); // State for modal visibility
   const [isUserModalVisible, setuserIsModalVisible] = useState(false); // State for modal visibility
   const [userConnectStatus, userStatus] = useState('');
@@ -54,18 +49,12 @@ const ChatScreen = () => {
   const [messageSelected, setMessageSelected] = useState(null);
   const [messageSelectedArr, setMessageSelectedArr] = useState([]);
   const [showModal, setShowModal] = useState(false);
-
   const [imgUrlu, setImageUrl] = useState(null);
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
-
-
   const dispatch = useDispatch();
   const userId = useSelector((state) => state.auth.user?._id);
   const luserName = useSelector((state) => state.auth.user.username);
-  const messageList = useSelector(
-    (state) => state.auth.messageList[`${username}`]
-  );
-  const [layout, setLayout] = useState(null);
+  const messageList = useSelector((state) => state.auth.messageList[`${username}`]);
   const flatListRef = useRef(); // Reference for FlatList
   const [wsMessage, setWsMessage] = useState('');  // WebSocket message state
   const [activeVideoId, setActiveVideoId] = useState(null);
@@ -116,14 +105,6 @@ const ChatScreen = () => {
     }
   }, [userId]);
 
-
-//   useEffect(() => {
-//   if (messageList) {
-//     console.log("MESSAGE LIST 👉", messageList);
-//   }
-// }, []);
-
-
 useEffect(() => {
   if (chatMessages.length > 0) {
     setTimeout(() => {
@@ -135,7 +116,6 @@ useEffect(() => {
   }
 }, []);
 
-
   // When the message list changes, format it and set it to chatMessages
   useEffect(() => {
 
@@ -144,6 +124,7 @@ useEffect(() => {
 
       const formattedMessages = messageList
         .map((item, index) => {
+          
           if (item.message?.length > 0) {
             return {
               id: index,
@@ -179,7 +160,19 @@ useEffect(() => {
         })
         .filter(Boolean)
        //  .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      setChatMessages(formattedMessages);
+     let finalMessages = [...formattedMessages];
+
+// 🔥 INSERT DIVIDER USING UNREADCOUNT
+if (unreadcount > 0 && unreadcount < finalMessages.length) {
+  const dividerIndex = finalMessages.length - unreadcount;
+  finalMessages.splice(dividerIndex, 0, {
+    id: "new-divider",
+    type: "divider",
+  });
+}
+const messagesWithDivider = [...finalMessages]; // contains divider
+setChatMessages(messagesWithDivider.reverse()); // no change to your reverse logic
+
       setisLoading(false)
     }
     else {
@@ -290,38 +283,28 @@ useEffect(() => {
       );
     }
   };
-  const [imageSelected, setSelectedPic] = useState({});
 
-  // useEffect(() => {
-  //   const intervalId = setInterval(() => {
-  //     dispatch(getListMessages(userId, username));
-  //   }, 1000);
-  //   return () => clearInterval(intervalId); // Make sure to clear the interval on cleanup
-  // }, [userId, username]); // Now this `useEffect` will run only when `userId` or `username` changes.
+const handleSend = () => {
+  if (!message.trim()) return;
 
-
-  const handleSend = () => {
-    if (message.trim()) {
-      const newMessage = {
-        id: new Date().getTime().toString(),
-        text: message,
-        sender: "me",
-        timestamp: new Date().toISOString(),
-        position: "right",
-      };
-      setChatMessages((prevMessages) => [...prevMessages, newMessage]);
-      setMessage("");
-      dispatch(sendMessage(userId, username, message));
-      dispatch(getListConversation(userId));
-      var data = {
-        userId: userId, msg: message, receiver_userid: touserId
-      };
-      // socket.send(JSON.stringify(data));
-      // if (flatListRef) {
-      //   flatListRef?.current.scrollToEnd({ animated: true });
-      // }
-    }
+  const newMessage = {
+    id: Date.now().toString(),
+    messageid: Date.now().toString(),
+    text: message,
+    sender: "me",
+    position: "right",
+    timestamp: new Date().toISOString(),
   };
+
+  // ✅ ADD MESSAGE INSTANTLY (at beginning because inverted)
+  setChatMessages(prev => [newMessage, ...prev]);
+
+  setMessage("");
+
+  // ✅ Send to backend
+  dispatch(sendMessage(userId, username, message));
+  dispatch(getListConversation(userId));
+};
 
   const onHandlerStateChange = (event) => {
     const { state, translationY, velocityY } = event.nativeEvent;
@@ -332,18 +315,6 @@ useEffect(() => {
       // }
     }
   };
-
-
-  // useEffect(() => {
-  //   // alert(userId)
-
-  //   if (flatListRef) {
-  //     // console.log((flatListRef))
-  //     flatListRef?.current.scrollToEnd({ animated: true });
-  //   }
-  // }, [userId])
-
-
   // Pull-to-refresh handler
   const onRefresh = () => {
 
@@ -352,16 +323,6 @@ useEffect(() => {
     dispatch(getListConversation(userId));
     setRefreshing(false);
   };
-
-  const closeModal = () => {
-
-    setIsModalVisible(false);
-
-  };
-
-  const handleOpenDialogBox = () => {
-    setIsModalVisible(true);
-  }
 const openGallery = () => {
   launchImageLibrary(
     {
@@ -382,22 +343,6 @@ const openGallery = () => {
       handleMultipleMedia(selectedFiles);
     }
   );
-};
-
-
-const handleLocalVideo = (videoUri) => {
-  const videoMessage = {
-    id: Date.now().toString(),
-    messageid: Date.now().toString(),
-    video: videoUri,
-    text: "",
-    image: "",
-    audio: "",
-    position: "right",
-    timestamp: new Date().toISOString(),
-  };
-
-  setChatMessages(prev => [...prev, videoMessage]);
 };
 
 const handleMultipleMedia = async (files) => {
@@ -466,90 +411,14 @@ const sendImageToBackend = async (imageUri) => {
   }
 };
 
-
-
-
-  const handleCreateStory = async (image) => {
-
-    // const userId = "user123";
-    const apiUrl = "https://chatzol.scriptzol.in/api/?url=app-send-message";
-    if (!image) {
-      Alert.alert("Error", "Please select an image.");
-      return;
-    }
-
-    const formData = new FormData();
-
-    formData.append("userid", userId);
-    formData.append("message", "image");
-    formData.append("tousername", username);
-
-    const imageData = {
-      uri: image,
-      type: "image/jpeg",
-      name: "story-image.jpg",
-    };
-
-    formData.append("image", imageData);
-    try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        body: formData,
-      });
-      // console.log(response,"result")
-      const result = await response.json();
-      if (result.success) {
-        console.log(result, "result")
-        console.log("Success", "Message Sent to Group successfully.");
-        onRefresh();
-        setImageUri(null);
-        // setCaption("");
-        // navigation.goBack();
-        // if (flatListRef) {
-        //   // console.log((flatListRef))
-        //   flatListRef?.current.scrollToEnd({ animated: true });
-        // }
-      } else {
-        // Alert.alert("Error", "Failed to upload story. Please try again.");
-      }
-    } catch (error) {
-      console.log("Error uploading story:", error);
-      // Alert.alert("Error", "Failed to upload story. Please try again.");
-    }
-  };
-
-  const openCamera = () => {
-    launchCamera(
-      {
-        mediaType: "photo",
-        quality: 1,
-        includeBase64: false,
-      },
-      (response) => {
-        if (response.didCancel) {
-          console.log("User cancelled image picker");
-        } else if (response.errorCode) {
-          console.log("ImagePicker Error: ", response.errorMessage);
-        } else {
-          ImageCropPicker.openCropper({
-            path: response.assets[0].uri,
-            width: 300,
-            height: 400,
-          }).then((image) => {
-            setImageUri(image.path);
-          });
-        }
-      }
-    );
-  };
-
   const handleOpenImage = (uril) => {
     setImageUrl(uril)
     setShowModal(true)
   }
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
 
-
-  const renderMessage = ({ item, handleAlertDelete, handleShowEmoji, handleLayout, handleSelectMessages, handleOpenImage }) => {
+  const renderMessage = useCallback(({ item, handleAlertDelete, handleShowEmoji, handleLayout, handleSelectMessages, handleOpenImage }) => {
     return (
       <>
         <TouchableOpacity
@@ -574,14 +443,27 @@ const sendImageToBackend = async (imageUri) => {
           >
 
             <TouchableOpacity
-              onLongPress={() => messageSelectedArr.length !== 0 ? handleSelectMessages(item) : item.position == "right" ? handleAlertDelete(item) : handleSelectMessages(item)}
-              onPress={(e) => messageSelectedArr.length !== 0 ? handleSelectMessages(item) : item.position != "right" && handleShowEmoji(item, e)}
-              style={
-                item.position === "right" || luserName === username
-                  ? !item.image && styles.myMessage
-                  : !item.image && styles.otherMessage
-              }
-            >
+  onLongPress={() => {
+    if (item.position === "right" || luserName === username) {
+      setSelectedMessage(item);
+      setDeleteModalVisible(true); // open modal for options
+    } else {
+      handleSelectMessages(item); // select messages for others
+    }
+  }}
+  onPress={(e) => {
+    if (messageSelectedArr.length !== 0) {
+      handleSelectMessages(item);
+    } else if (item.position !== "right") {
+      handleShowEmoji(item, e);
+    }
+  }}
+  style={
+    item.position === "right" || luserName === username
+      ? !item.image && styles.myMessage
+      : !item.image && styles.otherMessage
+  }
+>
               {
                 item?.forwarded == '1' &&
                 <View style={{ flexDirection: "row", position: "relative", top: wp(-2) }}>
@@ -614,7 +496,7 @@ const sendImageToBackend = async (imageUri) => {
     alignItems: "center"
   }}
 >
-  <TouchableOpacity onPress={() => playAudio(item)}>
+  <Pressable onPress={() => playAudio(item)}>
     
     {playingId === item.id ? (
       <MaterialIcons name="stop-circle" size={36} color="black" />
@@ -622,7 +504,7 @@ const sendImageToBackend = async (imageUri) => {
       <MaterialIcons name="play-circle-fill" size={36} color="black" />
     )}
 
-  </TouchableOpacity>
+  </Pressable>
    {playingId === item.id ? (
     <View>
    <LottieView
@@ -641,9 +523,7 @@ const sendImageToBackend = async (imageUri) => {
  <Text style={{ marginLeft: 8 }}>
   {playingId === item.id ? playTime : item.duration || "00:00"}
 </Text>
-
    )}
-   
  </View>
  <View style={[{
                     flexDirection: "row",justifyContent:'flex-end'
@@ -651,7 +531,7 @@ const sendImageToBackend = async (imageUri) => {
                     <Text
                       style={[
                         styles.timestamp,
-                        // Louis_George_Cafe.regular.h9,
+                        // Louis_George_Cafe.regular.h9,  
                         {
                           fontSize: wp(2),
                           color:
@@ -680,7 +560,6 @@ const sendImageToBackend = async (imageUri) => {
                     }
                   </View>
 </View>
-
 
   ):item?.image ? (
 
@@ -835,7 +714,7 @@ const sendImageToBackend = async (imageUri) => {
         </TouchableOpacity >
       </>
     );
-  };
+}, [messageSelectedArr, playingId, activeVideoId]);
 
   const handleAlertDelete = (item) => {
     // Show confirmation alert
@@ -857,50 +736,24 @@ const sendImageToBackend = async (imageUri) => {
     );
   };
 
+  function fnHandleDeleteMessage(item, deleteForAll = false) {
+  if (!item) return;
 
+  dispatch(
+    deleteMessages(userId, item.messageid, deleteForAll, (response) => {
+      Toast.show({
+        text1: response.message,
+        type: 'success',
+        position: 'top',
+      });
 
-  function fnHandleDeleteMessage(item) {
-    // alert(JSON.stringify(item))
-
-    dispatch(
-      deleteMessages(userId, item.messageid, (response) => {
-        console.log(response.message, 'deleteMessage')
-        Toast.show({
-          text1: response.message,
-          type: 'success',
-          position: 'top',
-        });
-        dispatch(getListMessages(userId, username));
-        // dispatch(getListConversation(userId));
-      })
-    );
-  }
-
-  //  useEffect(() => {
-  //     Toast.show({
-  //       text1: "Error",
-  //       type: 'success', // 'success' will make it green by default, but you can override styles
-  //       position: 'top',
-  //       visibilityTime: 82000, // Duration for how long the toast is visible
-  //       props: {
-  //         // Custom props for styling
-  //         style: {
-  //           backgroundColor: 'green', // Set custom background color to green
-  //         },
-  //         text1Style: {
-  //           color: 'white', // Set text color to white for better contrast
-  //         }
-  //       },
-  //     });
-  //   }, []);
-
-  // 
-
-  useEffect(() => {
-    if (Platform.OS === 'android') {
-      requestAudioPermission(); // Request permission for Android
-    }
-  }, []);
+      // Refresh messages
+      dispatch(getListMessages(userId, username));
+      // Optionally refresh conversations if needed
+      // dispatch(getListConversation(userId));
+    })
+  );
+}
 
   // Request permission to record audio on Android
   const requestAudioPermission = async () => {
@@ -912,74 +765,11 @@ const sendImageToBackend = async (imageUri) => {
     }
   };
 
-  // // api Start Recording 
-  // const startRecording = async () => {
-
-  //   if (!isRecording) {
-  //     const path = `${RNFS.DocumentDirectoryPath}/Aud_${new Date().getTime()}.mp4`; // Unique filename based on timestamp
-  //     try {
-  //       await audioRecorderPlayer.startRecorder(path);
-  //       audioRecorderPlayer.addRecordBackListener((e) => {
-  //         setRecordingTime(audioRecorderPlayer.mmssss(e.current_position));
-  //       });
-
-  //       setIsRecording(true);
-  //       setAudioFile(path); // Store the path of the audio file
-  //     } catch (error) {
-  //       console.error("Error starting recorder: ", error);
-  //       Alert.alert('Error', JSON.stringify(error));
-  //     }
-  //   }
-  //   else {
-  //     stopRecording();
-  //   }
-  // };
-
- // audio setup for the voice recording 
-const sendAudioMessage = async (filePath) => {
-
-  const apiUrl = "https://chatzol.scriptzol.in/api/?url=app-send-message";
-
-  const formData = new FormData();
-
-  formData.append("userid", userId);
-  formData.append("message", "audio");
-  formData.append("tousername", username);
-
-  formData.append("audio", {
-    uri: filePath,
-    type: "audio/mp4",
-    name: `voice_${Date.now()}.mp4`,
-  });
-
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      // Refresh messages from server
-      dispatch(getListMessages(userId, username));
-      dispatch(getListConversation(userId));
-    }
-
-  } catch (error) {
-    console.log("Audio upload error:", error);
-  }
-};
-
-
-
 const [playingId, setPlayingId] = useState(null);
 const [playTime, setPlayTime] = useState("00:00");
 
 const playAudio = async (item) => {
+  requestAudioPermission();
   try {
     if (playingId === item.id) {
       await audioRecorderPlayer.stopPlayer();
@@ -1006,7 +796,7 @@ const playAudio = async (item) => {
     Math.floor(e.currentPosition)
   );
 
-  setPlayTime(current);
+  setPlayTime(prev => prev !== current ? current : prev);
 
   if (e.currentPosition >= e.duration) {
     audioRecorderPlayer.stopPlayer();
@@ -1021,24 +811,6 @@ const playAudio = async (item) => {
     console.log("Play error:", error);
   }
 };
-
-
-
-// api integration stop recording
-// const stopRecording = async () => {
-//   try {
-//     const result = await audioRecorderPlayer.stopRecorder();
-//     audioRecorderPlayer.removeRecordBackListener();
-//     setIsRecording(false);
-
-//     // Send to API
-//     await sendAudioMessage(result);
-
-//   } catch (error) {
-//     console.log("Stop recording error:", error);
-//   }
-// };
-
 
 // local stoprecording
 const stopRecording = async () => {
@@ -1068,9 +840,6 @@ const stopRecording = async () => {
   }
 };
 
-
-
-
 // local startrecording
 const startRecording = async () => {
   try {
@@ -1094,10 +863,6 @@ const startRecording = async () => {
   }
 };
 
-
-
-
-
   const emojiList = ['👍', '❤️', '😂', '😢', '😲'];
 
   const fnForwardMessage = () => {
@@ -1112,7 +877,7 @@ const startRecording = async () => {
           // userStatus(response.data.allow_send_message)
           onRefresh();
           setSearchTerm('')
-          setuserIsModalVisible(false),
+          setuserIsModalVisible(false), 
             setSelectedUsers([])
           setMessageSelectedArr([])
         }
@@ -1120,54 +885,9 @@ const startRecording = async () => {
     );
 
   }
-
-  const startPlaying = async () => {
-    try {
-      // Path to the audio file in your assets folder (this is just an example)
-      const assetPath = require('../assets/test.mp3'); // Static path for testing
-
-      // Create a path in the DocumentDirectoryPath to copy the file
-      const destinationPath = `${RNFS.DocumentDirectoryPath}/test.mp3`;
-
-      // Copy the file to the device's storage
-      await RNFS.copyFile(assetPath, destinationPath);
-
-      // Check if the file was copied successfully
-      const fileExists = await RNFS.exists(destinationPath);
-      if (!fileExists) {
-        throw new Error('File does not exist at path: ' + destinationPath);
-      }
-
-      // Now you can play the copied file using the correct path
-      console.log("Playing audio from path:", destinationPath);
-      await audioRecorderPlayer.startPlayer(destinationPath);
-
-      audioRecorderPlayer.addPlayBackListener((e) => {
-        if (e.currentPosition === e.duration) {
-          audioRecorderPlayer.stopPlayer();
-          Alert.alert('Playback Finished', 'Test audio has finished playing');
-        }
-      });
-    } catch (error) {
-      console.error("Error playing audio: ", error);
-      Alert.alert('Error', 'Failed to start playing: ' + error.message);
-    }
-  };
-
-  // Stop Playing
-  const stopPlaying = async () => {
-    try {
-      await audioRecorderPlayer.stopPlayer();
-    } catch (error) {
-      console.error("Error stopping player: ", error);
-      Alert.alert('Error', 'Failed to stop playing');
-    }
-  };
-  // 
-
   const handleLayout = (event) => {
     const { x, y, width, height } = event.nativeEvent.layout;
-    setLayout({ x, y, width, height });
+   
   };
 
   const handleSelectMessages = (item) => {
@@ -1188,7 +908,6 @@ const startRecording = async () => {
     setMessageSelected(item)
     setModalPosition({ x: pageX, y: pageY });
   }
-
   const handleStarMessage = () => {
     // alert(JSON.stringify(messageSelectedArr))
     dispatch(
@@ -1199,7 +918,6 @@ const startRecording = async () => {
       })
     );
   }
-
   const handleEmojiSelect = (item, type) => {
     // alert(item);
     // alert(JSON.stringify(messageSelected?.messageid))
@@ -1219,7 +937,6 @@ const startRecording = async () => {
       fromusername: luserName,
       tousername: username
     };
-
     try {
       dispatch(
         startCallApi(startCallPayload, async (response) => {  // Make this callback async
@@ -1248,8 +965,45 @@ const startRecording = async () => {
     }
   };
 
+const renderItem = useCallback(({ item }) => {
 
+  if (item.type === "divider") {
+    return (
+      <View style={{ alignItems: "center", marginVertical: 10 }}>
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          width: "85%"
+        }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: "#000" }} />
+          <Text style={{
+            marginHorizontal: 10,
+            color: "#000",
+            fontWeight: "600",
+            fontSize: 12
+          }}>
+            New Messages
+          </Text>
+          <View style={{ flex: 1, height: 1, backgroundColor: "#000" }} />
+        </View>
+      </View>
+    );
+  }
 
+  return renderMessage({
+    item,
+    handleAlertDelete,
+    handleShowEmoji,
+    handleLayout,
+    handleSelectMessages,
+    handleOpenImage
+  });
+
+}, [
+  messageSelectedArr,
+  playingId,
+  activeVideoId
+]);
   return (
     <ImageBackground
       source={wallpaper ? { uri: wallpaper ? wallpaper : require('../assets/chatbg.jpg') } : require('../assets/chatbg.jpg')}
@@ -1281,20 +1035,15 @@ const startRecording = async () => {
                 onPress={() => {
                   allowMessage == 1 &&
                     navigation.navigate("PublicProfile", {
-                      userItem: {
-                        image: userProfileImage,
-                        fullname: firstname,
-                        touserId: touserId,
-                        userConnectStatus: userConnectStatus,
+                      userItem: {image: userProfileImage,fullname: firstname, touserId: touserId, userConnectStatus: userConnectStatus,
                         username: username,
                         muted
-
                       }
                     })
                 }}
               >
                 <Image
-                  source={userProfileImage ? { uri: userProfileImage } : ""}
+                  source={userProfileImage }
                   style={styles.profileImage}
                 />
                 <View style={styles.textContainer}>
@@ -1344,31 +1093,23 @@ const startRecording = async () => {
             {/* <View style={{ height: 1, backgroundColor: "#9999", marginTop: wp(1) }} /> */}
 
           </LinearGradient>
-
+ 
 <FlatList
   ref={flatListRef}
-   data={[...chatMessages].reverse()}  
-  //data={chatMessages}    
-  inverted={true}
-  renderItem={({ item }) =>
-    renderMessage({
-      item,
-      handleAlertDelete,
-      handleShowEmoji,
-      handleLayout,
-      handleSelectMessages,
-      handleOpenImage
-    })
-  }
+  data={chatMessages}
+  inverted
+  renderItem={renderItem}
   keyExtractor={(item) => item.id.toString()}
-  contentContainerStyle={styles.messagesContainer}
+  initialNumToRender={15}
+  maxToRenderPerBatch={10}
+  windowSize={7}
+  removeClippedSubviews
+  updateCellsBatchingPeriod={50}
   keyboardShouldPersistTaps="handled"
   onRefresh={onRefresh}
   refreshing={refreshing}
 />
-
           <Toast zIndex={1} />
-
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}>
             {
@@ -1391,30 +1132,16 @@ const startRecording = async () => {
                         onChangeText={setMessage}
                         placeholder="Type Your Message" />
                   }
-
-
                   <TouchableOpacity onPress={openGallery}
                     style={{ borderRadius: wp(8) / 2, height: wp(8), width: wp(8), }}
                   >
                     <MaterialIcons name="attachment" size={30} style={[styles.nocon,]} color={COLORS.button_bg_color} />
                   </TouchableOpacity>
 
-                  {/* <TouchableOpacity onPress={openCamera}
-                    style={{ borderRadius: wp(8) / 2, height: wp(8), width: wp(8), }}
-                  >
-                    <MaterialIcons name="camera-enhance" size={28} style={[styles.nocon,]} color={COLORS.button_bg_color} />
-                  </TouchableOpacity> */}
                 </View>
                 {
                   message == '' ?
                     <>
-                      {/* <TouchableOpacity onPressIn={startRecording}
-                        onPressOut={stopRecording}
-                        style={{ borderRadius: wp(9) / 2, height: wp(9), width: wp(9), margin: wp(1) }}
-                      >
-                        <MaterialIcons name={isRecording ? "stop-circle" : 'mic'} size={24} style={[styles.nocon,]} color={COLORS.button_bg_color} />
-                      </TouchableOpacity> */}
-
                       {
                         isRecording ?
                           <TouchableOpacity
@@ -1558,9 +1285,6 @@ const startRecording = async () => {
               </View>
             </View>
           </Modal>
-
-          {/*  */}
-
           {/* Modal Box */}
           <Modal
             visible={showReactionModal}
@@ -1584,24 +1308,9 @@ const startRecording = async () => {
                     padding: wp(2),
                     top: modalPosition.y - 50,
                     marginHorizontal: wp(3)
-
-                    // left: modalPosition.x - hp(1)
                   },
                 ]}
               >
-                {/* Close Button */}
-                {/* <TouchableOpacity
-                  onPress={() => setShowReactionModal(false)}
-                  style={{
-                    position: 'absolute',
-                    bottom: wp(9),
-                    left: hp(28),
-                    zIndex: 1,
-                    marginHorizontal: wp(2)
-                  }}
-                >
-                  <Icon name="close-circle" size={34} color="#FFF" />
-                </TouchableOpacity> */}
                 {/* Emoji List */}
                 <FlatList
                   showsHorizontalScrollIndicator={false}
@@ -1627,6 +1336,74 @@ const startRecording = async () => {
               </View>
             </TouchableOpacity>
           </Modal>
+<Modal
+  animationType="fade"
+  transparent={true}
+  visible={deleteModalVisible}
+  onRequestClose={() => setDeleteModalVisible(false)}
+>
+  <TouchableWithoutFeedback onPress={() => setDeleteModalVisible(false)}>
+    <View style={{
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    }}>
+      <View style={{
+        width: '80%',
+        backgroundColor: 'white',
+        borderRadius: 12,
+        paddingVertical: 10,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      }}>
+       
+        <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'left' }}>
+            Delete Message ?
+          </Text>
+        </View>
+        <View style={{ height: 1, backgroundColor: '#e0e0e0' }} />
+        <TouchableOpacity
+          onPress={() => {
+            fnHandleDeleteMessage(selectedMessage, true);
+            setDeleteModalVisible(false);
+          }}
+          style={{ paddingVertical: 16, paddingHorizontal: 20 }}
+        >
+          <Text style={{ fontSize: 16, color: '#d32f2f', textAlign: 'right' }}>
+            Delete for Everyone
+          </Text>
+        </TouchableOpacity>        
+        <TouchableOpacity
+          onPress={() => {
+            fnHandleDeleteMessage(selectedMessage, false);
+            setDeleteModalVisible(false);
+          }}
+          style={{ paddingVertical: 16, paddingHorizontal: 20 }}
+        >
+          <Text style={{ fontSize: 16, color: '#d32f2f', textAlign: 'right' }}>
+            Delete for Me
+          </Text>
+        </TouchableOpacity>
+
+        
+        <TouchableOpacity
+          onPress={() => setDeleteModalVisible(false)}
+          style={{ paddingVertical: 16, paddingHorizontal: 20 }}
+        >
+          <Text style={{ fontSize: 16, color: '#1976d2', fontWeight: '500', textAlign: 'right' }}>
+            Cancel
+          </Text>
+        </TouchableOpacity>
+
+      </View>
+    </View>
+  </TouchableWithoutFeedback>
+</Modal>
           {/* Modal for viewing status details */}
           <Modal
             visible={showModal}
@@ -1651,12 +1428,6 @@ const startRecording = async () => {
                       alignItems: "center",
                       justifyContent: "center"
                     }}>
-                      {/* <TouchableOpacity
-                          // onPress={() => { setShowModal(false), setSelectedStatus(null) }}
-                          style={styles.closeButton}
-                        >
-                          <MaterialIcons name="close" size={34} color={COLORS.black} />
-                        </TouchableOpacity> */}
                       {imgUrlu && (
                         <View style={styles.modalBody}>
                           <Image
@@ -1682,10 +1453,8 @@ const startRecording = async () => {
 
   );
 };
-
 const styles = StyleSheet.create({
-
-  noContainer: {
+    noContainer: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "center",
@@ -1698,7 +1467,6 @@ const styles = StyleSheet.create({
     borderWidth: wp(0.5),
     marginBottom: wp(2),
     marginVertical: wp(0.5)
-
   },
   container: {
     flex: 1,
@@ -1718,7 +1486,6 @@ const styles = StyleSheet.create({
     top: 8, // 10px from the top
     right: 10, // 10px from the right
     zIndex: 1,
-
   },
   stickerList: {
     justifyContent: 'center',
@@ -1726,7 +1493,6 @@ const styles = StyleSheet.create({
     marginTop: wp(7),
     margin: wp(6),
   },
-
   stickerItem: {
     width: wp(40),
     height: wp(40),
@@ -1738,9 +1504,6 @@ const styles = StyleSheet.create({
     height: wp(50),
     marginTop:wp(1),
     resizeMode: 'contain',
-    // borderWidth: wp(0.4),
-    // borderRadius: wp(2),
-    // borderColor: COLORS.button_bg_color
   },
   noIcon: {
     backgroundColor: "#a020cb",
@@ -1757,22 +1520,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: wp(2),
   },
-
   iconContainer: {
     paddingHorizontal: wp(2)
   },
-
   profileContainer: {
     flexDirection: 'column',
     padding: wp(2),
   },
-
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',  // Ensures vertical alignment of items in the row
     justifyContent: 'space-between',  // Distributes space evenly between items
   },
-
   profileImage: {
     width: wp(10),
     height: wp(10),
@@ -1780,7 +1539,7 @@ const styles = StyleSheet.create({
     marginRight: wp(4),
     marginHorizontal: wp(4),
     borderColor: COLORS.button_bg_color,
-    borderWidth: wp(0.3)
+    borderWidth: wp(0.5)
   },
   textContainer: {
     flexDirection: 'column',
@@ -1797,7 +1556,6 @@ const styles = StyleSheet.create({
   about: {
     fontSize: 10,
     color: COLORS.white,
-
   },
   slamIcon: {
     width: wp(10),
@@ -1807,17 +1565,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.white,
   },
-
   myMessageContainer: {
     alignItems: "flex-end",
     margin: wp(2),
   },
-
   otherMessageContainer: {
     alignItems: "flex-start",
     margin: wp(2),
   },
-
   myMessage: {
     backgroundColor: "#a020cb",
     borderTopEndRadius: wp(2),
@@ -1844,7 +1599,6 @@ const styles = StyleSheet.create({
     // fontSize: 12,
     marginTop: wp(2),
   },
-
   textInput: {
     flex: 1,
     backgroundColor: "#F0F0F0",
@@ -1859,19 +1613,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
-
   modalContent: {
     backgroundColor: '#FFF',
     alignItems: 'center',
     padding: wp(1)
   },
-
-  modalText: {
-    fontSize: 18,
-    marginBottom: wp(5),
-  },
-
 });
-
 export default ChatScreen;
 

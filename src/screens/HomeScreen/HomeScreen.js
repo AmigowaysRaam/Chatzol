@@ -145,7 +145,8 @@ const handleSelectItem = (item) => {
       item.groupId,
       item.firstname,
       item.avatar,
-      item?.muted
+      item?.muted,
+      item?.unreadcount
     );
     return;
   }
@@ -221,6 +222,14 @@ const exitSelectionMode = () => {
   }, []);
 
 
+  useEffect(() => {
+  const interval = setInterval(() => {
+    dispatch(getListConversation(userId, viewMode));
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [userId, viewMode]);
+
   useFocusEffect(
     React.useCallback(() => {
       onRefresh();
@@ -229,18 +238,18 @@ const exitSelectionMode = () => {
     }, [])
   );
 
-  const fetchConversations = () => {
-    setLoading(true);
-    // alert(viewModex)
-    dispatch(getListConversation(userId, viewMode)),
-      dispatch(getUserProfile(userId))
-    setLoading(false);
-  };
+const fetchConversations = () => {
+  setLoading(true);
 
-  useEffect(() => {
+  dispatch(getListConversation(userId, viewMode));
+  dispatch(getUserProfile(userId));
+  setLoading(false);
+};
+useFocusEffect(
+  React.useCallback(() => {
     fetchConversations();
   }, [viewMode])
-
+);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -308,9 +317,9 @@ const exitSelectionMode = () => {
   const filteredChats = chats.filter((chat) =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const handleUserClick = (userId, username, type, groupId, firstname, avatar, muted) => {
+  const handleUserClick = (userId, username, type, groupId, firstname, avatar, muted,unreadcount) => {
     if (type === "user") {
-      navigation.navigate("ChatScreen", { touserId: userId, username, firstname, userProfileImage: avatar, muted }
+      navigation.navigate("ChatScreen", { touserId: userId, username, firstname, userProfileImage: avatar, muted,unreadcount}
       );
     }
     else {
@@ -359,7 +368,6 @@ const exitSelectionMode = () => {
           }
         });
       });
-
 
     return () => {
       InCallManager.stopRingtone();
@@ -441,7 +449,8 @@ const fnPinChat = () => {
       ]}>
 
         <Image
-          source={item.avatar ? { uri: item.avatar } : require('../../assets/nodp.jpg')}
+        // source={item.avatar ? { uri: item.avatar } : require('../../assets/nodp.jpg')}
+          source={ item.avatar  }
           style={styles.avatar}
         />
 
@@ -627,6 +636,7 @@ const fnPinChat = () => {
       ) : (
         <FlatList
           data={conversationList?.length !== 0 ? filteredChats : []}
+          extraData={filteredChats}
           keyExtractor={(item) => item.id.toString()}
          renderItem={({ item }) => renderItem({ item })}
           ListEmptyComponent={<View style={styles.emptyContainer}>
@@ -648,7 +658,7 @@ const fnPinChat = () => {
         >
           <View style={styles.modalOverlay}>
             <View style={{
-              // backgroundColor: 'white',
+              // backgroundColor: 'white',  
               padding: wp(1),
               borderRadius: wp(5),
               width: wp(90),
@@ -665,84 +675,16 @@ const fnPinChat = () => {
         </TouchableWithoutFeedback> 
       </Modal>
       {/*  */}
-      {/* <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalOpen}
-     
-      >
-        <TouchableWithoutFeedback 
-          onPress={() => setModalOpen(!modalOpen)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <TouchableOpacity
-                onPress={() => setModalOpen(!modalOpen)}
-                style={{
-                  marginHorizontal: wp(2),
-                  padding: wp(0.5),
-                  borderRadius: wp(5),
-                  alignSelf: 'flex-end',
-                  marginHorizontal: wp(4),
-                  marginTop: wp(2)
-                }}
-              >
-                <Icon name="close" size={30} color={COLORS.white} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => fnHandleMuteConvo()} style={styles.closeButton}>
-                <Text numberOfLines={1} style={[Louis_George_Cafe.regular.h7, styles.closeButtonText, {
-                }]}>{selectedId?.muted == 1 ? 'Unmute ' : "Mute "}
-                  <Text numberOfLines={1} style={[Louis_George_Cafe.bold.h6, styles.closeButtonText, {
-                  }]}>{selectedId?.name}</Text>
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => fnDeleteConvo()} style={styles.closeButton}>
-                <Text numberOfLines={1} style={[Louis_George_Cafe.regular.h7, styles.closeButtonText, {
-                }]}>{`Delete `}
-                  <Text numberOfLines={1} style={[Louis_George_Cafe.bold.h6, styles.closeButtonText, {
-                  }]}>{selectedId?.name}</Text>
-                </Text>
-              </TouchableOpacity>
-
-
-              <TouchableOpacity onPress={() => fnFavourotConvo()} style={styles.closeButton}>
-                <Text numberOfLines={1} style={[Louis_George_Cafe.regular.h7, styles.closeButtonText, {
-                }]}>{selectedId?.favourited == '1' ? `Remove from Favourites ` : 'Favourite'}
-                  
-                </Text>
-
-               
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => fnPinChat()} style={styles.closeButton}>
-                <Text numberOfLines={1} style={[Louis_George_Cafe.regular.h7, styles.closeButtonText, {
-                }]}>{selectedId?.pinChart == '1' ? `Remove Pin` : 'Pin Chart'}
-                  
-                </Text>
-              </TouchableOpacity>
-
-
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal> */}
     </View>
   );
 };
 
 const HeaderComponent = (profile) => {
-
-
   const navigation = useNavigation();
 
   const handleNavigateProfileScreen = () => {
     navigation.navigate("ProfileScreen");
   };
-
-  const handleNavigateSettingScreen = () => {
-    navigation.navigate("ChangePasswordScreen");
-  };
-
 
   return (
     <LinearGradient colors={["#F0F0F0", "#FFF"]} style={styles.headContainer}>
@@ -774,22 +716,10 @@ const HeaderComponent = (profile) => {
       >
         <Icon name="add" size={24} color={COLORS.white} />
       </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={{
-            borderWidth: wp(0.5),
-            borderColor: "#a020cb",
-            marginHorizontal: wp(2),
-            padding: wp(0.5),
-            borderRadius: wp(4)
-          }}
-          onPress={() => { handleNavigateSettingScreen() }}
-        >
-          <Icon name="settings" size={wp(6)} color={COLORS.white} />
-        </TouchableOpacity> */}
         
 
         <TouchableOpacity onPress={() => { handleNavigateProfileScreen() }}>
-          <Image source={profile?.profile?.profilepicture ? { uri: profile?.profile?.profilepicture } : require('../../assets/nodp.jpg')} style={{
+          <Image source={profile?.profile?.profilepicture } style={{
             width: wp(8),
             height: wp(8),
             borderRadius: wp(6),
@@ -803,26 +733,6 @@ const HeaderComponent = (profile) => {
   );
 };
 
-// const NewChatComponent = () => {
-//   const navigation = useNavigation();
-//   return (
-//     <View style={{ flexDirection: "row", alignItems: "center" }}>
-//       <Text
-//         style={[
-//           Louis_George_Cafe.bold.h6,
-//           {
-//             marginHorizontal: wp(1),
-          
-//             alignSelf: "center",
-//             color: COLORS.white,
-//           }]}
-//       >
-        
-//       </Text>
-      
-//     </View>
-//   );
-// };
 
 const SearchComponent = ({ searchTerm, setSearchTerm }) => {
   return (
@@ -840,7 +750,7 @@ const SearchComponent = ({ searchTerm, setSearchTerm }) => {
         placeholder="Search..."
         placeholderTextColor={COLORS.white}
         color={COLORS.white}
-      // placeholderStyle={{ fontFamily: Louis_George_Cafe.regular.h9}} // Style the placeholder text
+      // placeholderStyle={{ fontFamily: Louis_George_Cafe.regular.h9}} // Style the placeholder text 
       />
 
     </View>
@@ -851,11 +761,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  settingIcon: {
-    width: wp(13),
-    height: wp(13),
-    marginHorizontal: wp(2)
-  },
   headContainer: {
     flexDirection: "row",
     justifyContent: 'space-between',
@@ -865,10 +770,6 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginRight: wp(4),
     paddingHorizontal: wp(2)
-  },
-  settingsBtn: {
-    flexDirection: "row",
-    marginHorizontal: wp(6),
   },
   textContainer: {
     flex: 1,

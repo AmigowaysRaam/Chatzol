@@ -1,169 +1,252 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
-import { Louis_George_Cafe } from "../../resources/fonts";
+import {  View,  Text,  TextInput,  TouchableOpacity,  StyleSheet,  KeyboardAvoidingView,  Platform,} from "react-native";
 import { wp, hp } from "../../resources/dimensions";
 import { COLORS } from "../../resources/Colors";
 import { useDispatch, useSelector } from "react-redux";
 import { changePassword } from "../../redux/authActions";
 import { useNavigation } from "@react-navigation/native";
-import ButtonComponent from "../../components/Button/Button";
-import { MaterialIcons } from "@expo/vector-icons";
-import Toast from 'react-native-toast-message'; // Import Toast
+import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
+import HeaderBar from "../../ScreenComponents/HeaderComponent/HeaderComponent";
+
+
+  const InputField = ({
+    label,
+    value,
+    onChangeText,
+    secure,
+    toggleSecure,
+    show,
+  }) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{label}</Text>
+
+      <View style={styles.inputWrapper}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={!show}
+          style={styles.input}
+          placeholder={`Enter ${label}`}
+          placeholderTextColor="#777"
+        />
+
+        <TouchableOpacity onPress={toggleSecure}>
+          <Ionicons
+            name={show ? "eye-off-outline" : "eye-outline"}
+            size={22}
+            color="#aaa"
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
 
 const ChangePasscode = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
+  const profile = useSelector((state) => state.auth.profile);
+
   const [oldPasscode, setOldPasscode] = useState("");
   const [newPasscode, setNewPasscode] = useState("");
   const [confirmPasscode, setConfirmPasscode] = useState("");
-  const [passcodeError, setPasscodeError] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setLoading] = useState(false);
 
-  const profile = useSelector((state) => state.auth.profile);
-
-  const setErrorAndLoading = (errorMessage) => {
-    setPasscodeError(errorMessage);
-    setLoading(false);
-  };
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleChangePasscode = () => {
     setLoading(true);
 
-    if (!oldPasscode) return setErrorAndLoading("Old password is required");
-    if (!newPasscode) return setErrorAndLoading("New password is required");
-    if (!confirmPasscode) return setErrorAndLoading("Please confirm your password");
-    if (newPasscode !== confirmPasscode) return setErrorAndLoading("New password does not match");
+    if (!oldPasscode || !newPasscode || !confirmPasscode) {
+      setError("All fields are required");
+      setLoading(false);
+      return;
+    }
 
-    setPasscodeError("");
+    if (newPasscode.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
+
+    if (newPasscode !== confirmPasscode) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    setError("");
+
     const payload = {
       currentpassword: oldPasscode,
       password: newPasscode,
       userid: profile._id,
     };
+
     dispatch(
       changePassword(payload, (response) => {
         setLoading(false);
-        if (response.success) {
 
+        if (response.success) {
           Toast.show({
-            text1: 'Success',
-            text2: response.message || "Your passcode has been changed successfully!",
-            type: 'success',
+            type: "success",
+            text1: "Password Updated",
+            text2: response.message || "Your password was changed successfully",
           });
 
-          // Set a timeout before navigating back
-          setTimeout(() => {
-            navigation.goBack();
-          }, 1000); // Adjust the timeout duration (in milliseconds) as needed
-
+          setTimeout(() => navigation.goBack(), 1200);
         } else {
-          setErrorAndLoading(response.message || "Failed to change passcode.");
+          setError(response.message || "Failed to change password");
           Toast.show({
-            text1: 'Error',
-            text2: response.message || "Failed to change passcode.",
-            type: 'error',
+            type: "error",
+            text1: "Error",
+            text2: response.message,
           });
         }
-
       })
     );
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: COLORS.black }]}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconContainer}>
-        <MaterialIcons name="arrow-back" size={28} color={COLORS.white} />
-      </TouchableOpacity>
-      <Text style={[Louis_George_Cafe.bold.h3, styles.title, { color: COLORS.white }]}>
-        Change Password
-      </Text>
-      <Text style={[Louis_George_Cafe.medium.h7, styles.description, { color: COLORS.white }]}>
-        Please enter your old passcode and your new passcode below.
-      </Text>
-      <TextInput
-        style={[styles.input, { color: COLORS.white, backgroundColor: COLORS.input_background }]}
-        placeholder="Old Password"
-        value={oldPasscode}
-        onChangeText={setOldPasscode}
-        secureTextEntry
-        placeholderTextColor={COLORS.placeholder}
-        accessibilityLabel="Old passcode input"
-      />
-      <TextInput
-        style={[styles.input, { color: COLORS.white, backgroundColor: COLORS.input_background }]}
-        placeholder="New Password"
-        value={newPasscode}
-        onChangeText={setNewPasscode}
-        secureTextEntry
-        placeholderTextColor={COLORS.placeholder}
-        accessibilityLabel="New passcode input"
-        maxLength={16} // Set maximum length to 4
-      />
-      <TextInput
-        style={[styles.input, { color: COLORS.white, backgroundColor: COLORS.input_background }]}
-        placeholder="Confirm Password"
-        value={confirmPasscode}
-        onChangeText={setConfirmPasscode}
-        secureTextEntry
-        placeholderTextColor={COLORS.placeholder}
-        accessibilityLabel="Confirm passcode input"
-        maxLength={16} // Set maximum length to 4
-      />
-      {passcodeError ? (
-        <Text style={{ color: COLORS.validation, marginHorizontal: hp(3) }}>
-          {passcodeError}
-        </Text>
-      ) : null}
 
-      <View style={{ alignItems: "center" }}>
-        <ButtonComponent
-          title={"Change Password"}
-          isLoading={isLoading}
-          onPress={handleChangePasscode}
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : null}
+    >
+      {/* Header */}
+      <HeaderBar title="Change Password" showBackArrow/>
+
+      {/* Card */}
+      <View style={styles.card}>
+        <Text style={styles.subtitle}>
+          Update your password to keep your account secure.
+        </Text>
+
+        <InputField
+          label="Old Password"
+          value={oldPasscode}
+          onChangeText={setOldPasscode}
+          show={showOld}
+          toggleSecure={() => setShowOld(!showOld)}
         />
+
+
+        <InputField
+          label="New Password"
+          value={newPasscode}
+          onChangeText={setNewPasscode}
+          show={showNew}
+          toggleSecure={() => setShowNew(!showNew)}
+        />
+
+        <InputField
+          label="Confirm Password"
+          value={confirmPasscode}
+          onChangeText={setConfirmPasscode}
+          show={showConfirm}
+          toggleSecure={() => setShowConfirm(!showConfirm)}
+        />
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.button, isLoading && { opacity: 0.7 }]}
+          onPress={handleChangePasscode}
+          disabled={isLoading}
+        >
+          <Text style={styles.buttonText}>
+            {isLoading ? "Updating..." : "Update Password"}
+          </Text>
+        </TouchableOpacity>
       </View>
-      <Text>
-        <Toast ref={(ref) => Toast.setRef(ref)} /> {/* Initialize Toast */}
-      </Text>
-    </View>
+
+      <Toast />
+    </KeyboardAvoidingView>
   );
 };
+
+export default ChangePasscode;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "#fff",
   },
-  title: {
-    textAlign: "center",
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: wp(5),
+    paddingTop: hp(6),
   },
-  description: {
-    marginBottom: "15%",
-    textAlign: "center",
+
+  headerTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
   },
-  iconContainer: {
-    position: "absolute",
-    top: 20,
-    left: 20,
-    zIndex: 1,
+
+  card: {
+    marginTop: hp(6),
+    marginHorizontal: wp(6),
+    backgroundColor: "#e7caf0",
+    borderRadius: 20,
+    padding: wp(6),
   },
+
+  subtitle: {
+    color: "#661480",
+    fontSize: 13,
+    marginBottom: hp(3),
+  },
+
+  inputContainer: {
+    marginBottom: hp(2),
+  },
+
+  label: {
+    color: "#661480",
+    fontSize: 13,
+    marginBottom: hp(0.8),
+  },
+
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E8EAED",
+    borderRadius: 12,
+    paddingHorizontal: wp(4),
+  },
+
   input: {
+    flex: 1,
+    color: "#000",
     height: hp(6),
-    width: wp(80),
-    alignSelf: "center",
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: hp(1),
-    marginBottom: hp(1),
+  },
+
+  error: {
+    color: "#FF4D4D",
+    marginTop: hp(1),
+    fontSize: 13,
+  },
+
+  button: {
+    marginTop: hp(3),
+    backgroundColor: COLORS.button_bg_color,
+    paddingVertical: hp(1.8),
+    borderRadius: 14,
+    alignItems: "center",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
-
-export default ChangePasscode;

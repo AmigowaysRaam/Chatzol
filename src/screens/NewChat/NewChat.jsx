@@ -105,6 +105,13 @@ const NewChat = () => {
           <AntDesign name="addusergroup" size={22} color="#fff" />
           <Text style={styles.actionText}>New Group</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+  style={styles.actionButton}
+  onPress={() => navigation.navigate("PhoneContacts")}
+>
+  <FontAwesome name="address-book" size={22} color="#fff" />
+  <Text style={styles.actionText}>Phone Contacts</Text>
+</TouchableOpacity>
 
         {(allowCommunity == 1 || allowCommunity == "1") && (
           <TouchableOpacity
@@ -118,7 +125,7 @@ const NewChat = () => {
       </View>
 
       {/* Contacts Title */}
-      <Text style={styles.contactTitle}>Contacts</Text>
+      <Text style={styles.contactTitle}>Global Users</Text>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -127,7 +134,7 @@ const NewChat = () => {
           style={styles.searchInput}
           value={searchTerm}
           onChangeText={setSearchTerm}
-          placeholder="Search contacts..."
+          placeholder="Search users..."
           placeholderTextColor="#999"
         />
       </View>
