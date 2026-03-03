@@ -179,10 +179,9 @@ const UserStories = () => {
                             alignItems: "center",
                         }}>
                         <Image
-                            source={profile?.profilepicture ? { uri: profile?.profilepicture } : ""}
-                            style={[styles.statusImage, {
-                                borderColor: 'grey'
-                            }]}
+                     //    source={profile?.profilepicture ? { uri: profile?.profilepicture } : ""}
+                            source={ profile?.profilepicture}
+                            style={[styles.statusImage]}
                         />
                         <View style={{ position: 'relative', top: 18, right: 20, borderColor: COLORS.white, borderWidth: wp(0.3), backgroundColor: COLORS.black, borderRadius: wp(10) }}>
                             <Icon name="add-circle" size={22} color={COLORS.button_bg_color} />
@@ -353,7 +352,7 @@ const styles = StyleSheet.create({
         height: wp(14),
         borderRadius: wp(7),
         borderWidth: 2,
-        borderColor: 'white',
+        borderColor: COLORS.button_bg_color,
     },
     statusTextContainer: {
         marginLeft: wp(3),

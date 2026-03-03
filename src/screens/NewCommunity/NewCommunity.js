@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(2),
     backgroundColor: "#f1f3f6",
   },
-  userSelected: { backgroundColor: "#333333" },
+  userSelected: { backgroundColor: "#e7caf0" },
   userName: { flex: 1, marginLeft: wp(3), color: COLORS.white },
   createButton: {
     position: "absolute",

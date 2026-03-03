@@ -80,7 +80,8 @@ const CallHistory = () => {
                     {/* {JSON.stringify(item,null,2)} */}
                 </Text>
                   <TouchableOpacity style={styles.userItem}>
-                <Image source={{ uri: item?.image || "https://via.placeholder.com/100" }} style={styles.profilePic} />
+                    <Image source={ item?.image } style={styles.profilePic} />
+                {/* <Image source={{ uri: item?.image || "https://via.placeholder.com/100" }} style={styles.profilePic} /> */}
                 <View style={styles.usernameContainer}>
                     <Text numberOfLines={1} style={[Louis_George_Cafe.bold.h6, { color: COLORS.white, textTransform: "capitalize" }]}>
                         {item?.username || "Unknown"}
@@ -167,6 +168,8 @@ const styles = StyleSheet.create({
         width: wp(12),
         height: wp(12),
         borderRadius: wp(6),
+        borderWidth:wp(0.5),
+        borderColor:COLORS.button_bg_color
     },
 
     listContainer: {

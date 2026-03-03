@@ -266,12 +266,12 @@ const CommunitChat = () => {
 
   return (
     <ImageBackground
-      source={wallpaper ? { uri: wallpaper } : ""}
+      source={wallpaper ? { uri: wallpaper ? wallpaper : "" } : require('../assets/chatbg.jpg')}
       style={styles.imageBackground}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={[styles.container, {
-          backgroundColor: wallpaper === null && "#FFF",
+          //backgroundColor: wallpaper === null && "#FFF",
         }]}>
           <LinearGradient
             colors={["#F0F0F0", "#FFF"]}
