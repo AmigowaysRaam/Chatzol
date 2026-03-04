@@ -42,6 +42,11 @@ import CreateStory from "../screens/createStory/createStory";
 import OwnStatusView from "../screens/OwnStatusView/OwnStatusView";
 import CallScreen from "../screens/CallScreen";
 import AnswerCallScreen from "../screens/AnswerCallScreen";
+import OtpPassword from "../screens/OtpPassword";
+import BiometricScreen from "../screens/BiometricScreen";
+import StarredMessagesScreen from "../screens/StaredMessages/StaredMessages";
+import PhoneContactsScreen from "../screens/PhoneContactsScreen";
+import DeleteAccountScreen from "../screens/DeleteAccount";
 
 
 const Stack = createNativeStackNavigator();
@@ -57,6 +62,7 @@ function InitialRouter() {
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="SignIn" component={SignIn} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        <Stack.Screen name="OtpPassword" component={OtpPassword}/>
         <Stack.Screen name="SlameQuestions" component={SlameQuestions} />
         <Stack.Screen name="UserAnswer" component={UserAnswer} />
         <Stack.Screen name="SlameQuestions2" component={SlameQuestions2} />
@@ -92,12 +98,16 @@ function InitialRouter() {
         <Stack.Screen name="AddSubgroup" component={AddSubgroup} />
         <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
         <Stack.Screen name="PublicProfile" component={PublicProfile} />
-        <Stack.Screen name="StaredMessages" component={StaredMessages} />
+        <Stack.Screen name="StarredMessagesScreen" component={StarredMessagesScreen}/>
+         <Stack.Screen name="StaredMessages" component={StaredMessages} />
         <Stack.Screen name="CreateStory" component={CreateStory} />
         <Stack.Screen name="OwnStatusView" component={OwnStatusView} />
         <Stack.Screen name="BlcokedUserList" component={BlcokedUserList} />
         <Stack.Screen name="CallScreen" component={CallScreen} />
         <Stack.Screen name="AnswerCallScreen" component={AnswerCallScreen} />
+        <Stack.Screen name='BiometricScreen' component={BiometricScreen} />
+        <Stack.Screen name='PhoneContacts' component={PhoneContactsScreen}/>
+        <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen}/>
         <Stack.Screen
           name="StoryPreviewScreen"
           component={StoryPreviewScreen}

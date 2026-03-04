@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     ImageBackground,
     ToastAndroid,
+    Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -49,25 +50,26 @@ const CallScreen = () => {
         InCallManager.setForceSpeakerphoneOn(newSpeakerState);
     };
 
-    useEffect(() => {
-        const unsubscribe = firestore()
-            .collection('calls')
-            .doc(callId)
-            .onSnapshot(snapshot => {
-                const data = snapshot.data();
-                // Assume call is considered "answered" once both streams are active or peerConnection is ready
-                if (!isCallAnswered && data?.answer) {
-                    setIsCallAnswered(true);
-                    startCallTimer();
-                }
+    // useEffect(() => {
+    //     const unsubscribe = firestore()
+    //         .collection('calls')
+    //         .doc(callId)
+    //         .onSnapshot(snapshot => {
+    //             const data = snapshot.data();
+    //             Alert.alert(':',JSON.stringify(data,null,2))
+    //             // Assume call is considered "answered" once both streams are active or peerConnection is ready
+    //             if (!isCallAnswered && data?.answer) {
+    //                 setIsCallAnswered(true);
+    //                 startCallTimer();
+    //             }
 
-                if (data?.callEnded) {
-                    ToastAndroid.show('Call Declined', ToastAndroid.SHORT);
-                    endCall(true); // Clean up
-                }
-            });
-        return () => unsubscribe();
-    }, [callId]);
+    //             if (data?.callEnded) {
+    //                 ToastAndroid.show('Call Declined', ToastAndroid.SHORT);
+    //                 endCall(true); // Clean up
+    //             }
+    //         });
+    //     return () => unsubscribe();
+    // }, [callId]);
 
     const startCallTimer = () => {
         if (!callTimerRef.current) {
@@ -114,18 +116,18 @@ const CallScreen = () => {
     };
 
     const endCall = async (remoteEnded = false) => {
-        const endCallPayload = {
-            userid: userId,
-            callid: apiCallId,
-        };
+        // const endCallPayload = {
+        //     userid: userId,
+        //     callid: apiCallId,
+        // };
 
-        try {
-            // Notify backend that the user ended the call
-            dispatch(userEndCallApi(endCallPayload, (response) => {
-                if (!response.success) {
-                    console.warn('Failed to notify backend of call end');
-                }
-            }));
+         try {
+        //     // Notify backend that the user ended the call
+        //     dispatch(userEndCallApi(endCallPayload, (response) => {
+        //         if (!response.success) {
+        //             console.warn('Failed to notify backend of call end');
+        //         }
+        //     }));
 
             // Stop any ongoing ringtone
             InCallManager.stopRingtone();
@@ -154,12 +156,12 @@ const CallScreen = () => {
                 setRemoteStream(null);
             }
             // Update Firestore only if the call was not already ended by the remote user
-            if (!remoteEnded) {
+            
                 await firestore().collection('calls').doc(callId).update({
                     callEnded: true,
                     status: 'declined',
                 });
-            }
+            
 
             // Show toast and navigate back
             ToastAndroid.show('Call Ended', ToastAndroid.SHORT);
@@ -173,7 +175,7 @@ const CallScreen = () => {
 
     return (
         <ImageBackground
-            source={{}}
+            source={require('../assets/chatbg.jpg')}
             style={styles.container}
         >
             <View style={styles.profileContainer}>
@@ -229,7 +231,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingVertical: hp('8%'),
-        backgroundColor: '#a020cb',
+       
     },
     profileContainer: {
         alignItems: 'center',

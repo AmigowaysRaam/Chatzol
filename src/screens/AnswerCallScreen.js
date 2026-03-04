@@ -3,7 +3,9 @@ import firestore from '@react-native-firebase/firestore';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+    Alert,
     Image,
+    ImageBackground,
     StyleSheet,
     Text,
     ToastAndroid,
@@ -16,6 +18,7 @@ import { userAnswerCallApi, userEndCallApi } from '../redux/authActions';
 import { hp, wp } from '../resources/dimensions';
 import { Louis_George_Cafe } from '../resources/fonts';
 import { answerCall as answerCallService } from '../services/webrtc';
+import { COLORS } from "../resources/Colors";
 const AnswerCallScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
@@ -39,16 +42,39 @@ const AnswerCallScreen = () => {
             .onSnapshot(snapshot => {
                 const data = snapshot.data();
                 if (!data) return;
-                if ((data.status === 'declined' || data?.callEnded) && !isCallAnswered) {
-                    ToastAndroid.show('Call was declined or ended by the other user', ToastAndroid.SHORT);
-                    navigation.goBack();
-                }
+                if (data?.callEnded) {
+    ToastAndroid.show('Call Ended by other user', ToastAndroid.SHORT);
+    endCallCleanup();
+}
             });
 
         return () => {
             if (unsubscribeRef.current) unsubscribeRef.current();
         };
-    }, [callId, isCallAnswered]);
+    }, [callId]);
+
+    const hasEndedRef = useRef(false);
+
+
+ const endCallCleanup = () => {
+    if (hasEndedRef.current) return;
+    hasEndedRef.current = true;
+
+    if (callTimerRef.current) {
+        clearInterval(callTimerRef.current);
+        callTimerRef.current = null;
+    }
+
+    peerConnection?.close();
+    setPeerConnection(null);
+
+    localStream?.getTracks().forEach(track => track.stop());
+    remoteStream?.getTracks().forEach(track => track.stop());
+
+    InCallManager.stop();
+    navigation.goBack();
+};
+
 
     const handleAnswerCall = async () => {
         try {
@@ -60,20 +86,20 @@ const AnswerCallScreen = () => {
           setIsSpeakerOn(true);
       
           // Notify backend that the call has been answered
-          const answerCallPayload = {
-            userid: userId,
-            callid: callApiId,
-            // status: 'answered',
-          };
+        //   const answerCallPayload = {
+        //     userid: userId,
+        //     callid: callApiId,
+        //     // status: 'answered',
+        //   };
       
-          dispatch(userAnswerCallApi(answerCallPayload, (response) => {
-            if (!response.success) {
-              console.warn('Failed to notify backend that call was answered');
-            }
-            else{
-                // alert(JSON.stringify(response))
-            }
-          }));
+        //   dispatch(userAnswerCallApi(answerCallPayload, (response) => {
+        //     if (!response.success) {
+        //       console.warn('Failed to notify backend that call was answered');
+        //     }
+        //     else{
+        //         // alert(JSON.stringify(response))
+        //     }
+        //   }));
       
           // Set up peer connection and media streams
           const pc = await answerCallService(callId, setLocalStream, setRemoteStream);
@@ -118,15 +144,15 @@ const AnswerCallScreen = () => {
         InCallManager.stopRingtone();
         try {
           // Notify backend that user ended the call
-          const endCallPayload = {
-            userid: userId,
-            callid: callApiId,
-          };
-          dispatch(userEndCallApi(endCallPayload, (response) => {
-            if (!response.success) {
-              console.warn('Failed to notify backend of call end');
-            }
-          }));
+        //   const endCallPayload = {
+        //     userid: userId,
+        //     callid: callApiId,
+        //   };
+        //   dispatch(userEndCallApi(endCallPayload, (response) => {
+        //     if (!response.success) {
+        //       console.warn('Failed to notify backend of call end');
+        //     }
+        //   }));
       
           // Clean up media connections
           peerConnection?.close();
@@ -161,7 +187,11 @@ const AnswerCallScreen = () => {
       
 
     return (
-        <View style={styles.container}>
+        <ImageBackground
+        source={require('../assets/chatbg.jpg')}
+        style={styles.container}
+        >
+       
             <Text numberOfLines={1} style={[
                 Louis_George_Cafe.bold.h4,
                 styles.title,
@@ -187,10 +217,11 @@ const AnswerCallScreen = () => {
                     resizeMode="contain"
                     source={callerPic ? { uri: callerPic } : require('../../src/assets/animations/user-at-phone.png')}
                     style={{
-                        width: hp(60),
-                        height: hp(45),
-                        backgroundColor: "#a020cb",
-                        opacity: 1
+                         width: wp('50%'),
+                        height: wp('50%'),
+                       borderRadius: wp('25%'),
+                        opacity: 1,
+                        backgroundColor: COLORS.input_background
                     }}
                 />
 
@@ -225,14 +256,14 @@ const AnswerCallScreen = () => {
                     </>
                 )}
             </View>
-        </View>
+       
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#a020cb',
         alignItems: 'center',
         justifyContent: 'center',
     },

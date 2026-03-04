@@ -44,7 +44,7 @@ function ButtonComponent({ title, isLoading, onPress }) {
         ) : (
           <Text
             style={[
-              Louis_George_Cafe.regular.h8,
+              Louis_George_Cafe.regular.h6,
               {
                 color: "#fff",
               },

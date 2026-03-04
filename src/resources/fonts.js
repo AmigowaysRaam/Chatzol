@@ -9,6 +9,8 @@ export const fonts = {
   Louis_George_Cafe_Light: "Louis_George_Cafe_Light",
   Louis_George_Cafe_Bold: "Louis_George_Cafe_Bold",
   Louis_George_Cafe_Regular: "Louis_George_Cafe_Regular",
+  poppins_semi_bold: 'Poppins-SemiBold',
+  poppins_bold: 'Poppins-Bold',
   CooperBlack: "CooperBlack"
 };
 
@@ -135,53 +137,53 @@ export const Louis_George_Cafe = {
       color: colors.commonText,
     },
   },
-  // semi_bold: {
-  //   h1: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h1,
-  //     color: colors.commonText,
-  //   },
-  //   h2: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h2,
-  //     color: colors.commonText,
-  //   },
-  //   h3: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h3,
-  //     color: colors.commonText,
-  //   },
-  //   h4: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h4,
-  //     color: colors.commonText,
-  //   },
-  //   h5: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h5,
-  //     color: colors.commonText,
-  //   },
-  //   h6: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h6,
-  //     color: colors.commonText,
-  //   },
-  //   h7: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h7,
-  //     color: colors.commonText,
-  //   },
-  //   h8: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h8,
-  //     color: colors.commonText,
-  //   },
-  //   h9: {
-  //     fontFamily: fonts.poppins_semi_bold,
-  //     ...fontSizes.h9,
-  //     color: colors.commonText,
-  //   },
-  // },
+  semi_bold: {
+    h1: {
+      fontFamily: fonts.poppins_semi_bold,
+      ...fontSizes.h1,
+      color: colors.commonText,
+    },
+    h2: {
+      fontFamily: fonts.poppins_bold,
+      ...fontSizes.h2,
+      color: colors.commonText,
+    },
+    h3: {
+      fontFamily: fonts.poppins_semi_bold,
+      ...fontSizes.h3,
+      color: colors.commonText,
+    },
+    h4: {
+      fontFamily: fonts.poppins_semi_bold,
+      ...fontSizes.h4,
+      color: colors.commonText,
+    },
+    h5: {
+      fontFamily: fonts.poppins_semi_bold,
+      ...fontSizes.h5,
+      color: colors.commonText,
+    },
+    h6: {
+      fontFamily: fonts.poppins_semi_bold,
+      ...fontSizes.h6,
+      color: colors.commonText,
+    },
+    h7: {
+      fontFamily: fonts.poppins_semi_bold,
+      ...fontSizes.h7,
+      color: colors.commonText,
+    },
+    h8: {
+      fontFamily: fonts.poppins_semi_bold,
+      ...fontSizes.h8,
+      color: colors.commonText,
+    },
+    h9: {
+      fontFamily: fonts.poppins_semi_bold,
+      ...fontSizes.h9,
+      color: colors.commonText,
+    },
+  },
   bold: {
     boldLarge: {
       fontFamily: fonts.Louis_George_Cafe_Bold,

@@ -199,7 +199,7 @@ const Profile = () => {
             onPress={handleImagePicker}
           >
             <Image
-              source={{ uri: profileImage }}
+              source={{ uri: profileImage} }
               style={styles.profileImage}
             />
             <Ionicons
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     width: wp(25),
     height: wp(25),
     borderRadius: wp(12.5),
-    borderColor: "#fff",
+    borderColor: COLORS.button_bg_color,
     borderWidth: wp(0.6),
   },
   cameraIcon: {
@@ -359,3 +359,4 @@ const styles = StyleSheet.create({
 });
 
 export default Profile;
+

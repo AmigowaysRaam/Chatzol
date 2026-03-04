@@ -21,7 +21,7 @@ import { TextInput } from "react-native-paper";
 
 
 const ForgotPassword = ({ navigation }) => {
-  const [email, setEmail] = useState("amigoways@gmail.com");
+  const [email, setEmail] = useState("");
   const [mailErr, setEmailError] = useState("");
   const dispatch = useDispatch();
 
@@ -39,22 +39,25 @@ const ForgotPassword = ({ navigation }) => {
       setEmailError("");
       emailValid = true;
     }
+     navigation.navigate('CreatePasswordonForget', { emailParams: email });
 
     if (emailValid) {
       dispatch(
         checkEmailRequest(email, (response) => {
+           navigation.navigate('CreatePasswordonForget', { emailParams: email });
           if (response.success) {
             alert(JSON.stringify(response))
-            // Toast.show({
-            //   text1: 'Success',
-            //   text2: response.message,
-            //   type: 'success',
-            // });
-            // setTimeout(() => {
-            //   navigation.navigate('CreatePasswordonForget', { emailParams: email });
-            // }, 1000);
+             Toast.show({
+               text1: 'Success',
+               text2: response.message,
+               type: 'success',
+             });
+            setTimeout(() => {
+               navigation.navigate('CreatePasswordonForget', { emailParams: email });
+             }, 1000);
           }
           else {
+              navigation.navigate('CreatePasswordonForget', { emailParams: email });
             Toast.show({
               text1: 'Error',
               text2: response.message,

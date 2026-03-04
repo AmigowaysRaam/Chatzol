@@ -26,7 +26,90 @@ import { AppState } from 'react-native';
 import Toast from "react-native-toast-message";
 import firestore from '@react-native-firebase/firestore';
 import InCallManager from 'react-native-incall-manager';
-;
+
+
+
+const SelectionHeader = ({
+  selectedChats,
+  exitSelectionMode,
+  fnDeleteConvo,
+  fnHandleMuteConvo,
+  fnPinChat,
+  fnFavourotConvo,
+}) => {
+
+   const isPinnedSelected = selectedChats.some(item => item.pinChart == 1);
+const isMutedSelected = selectedChats.some(item => item.muted == 1);
+const isFavouriteSelected = selectedChats.some(item => item.favourited == 1);
+  return (
+    <View style={{
+      height: 70,
+      backgroundColor: "#a020cb",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 15
+    }}>
+      
+      {/* Back Button */}
+      <TouchableOpacity onPress={exitSelectionMode}>
+        <Icon name="arrow-back" size={24} color="white" />
+      </TouchableOpacity>
+
+      {/* Selected Count */}
+      <Text style={{
+        color: "white",
+        fontSize: 18,
+        fontWeight: "bold"
+      }}>
+        {selectedChats.length}
+      </Text>
+
+      {/* Action Icons */}
+      <View style={{ flexDirection: "row" }}>
+
+       <TouchableOpacity onPress={fnPinChat}>
+  <MaterialCommunityIcons
+    name={isPinnedSelected ? "pin-off-outline" : "pin-outline"}
+    size={24}
+    color="white"
+    style={{ marginHorizontal: 10 }}
+  />
+</TouchableOpacity>
+
+<TouchableOpacity onPress={fnHandleMuteConvo}>
+  <Icon
+    name={isMutedSelected ? "volume-high-outline" : "volume-mute-outline"}
+    size={24}
+    color="white"
+    style={{ marginHorizontal: 10 }}
+  />
+</TouchableOpacity>
+
+<TouchableOpacity onPress={fnFavourotConvo}>
+  <Icon
+    name={isFavouriteSelected ? "heart" : "heart-outline"}
+    size={24}
+    color="white"
+    style={{ marginHorizontal: 10 }}
+  />
+</TouchableOpacity>
+
+<TouchableOpacity onPress={fnDeleteConvo}>
+  <Icon
+    name={"trash-outline"}
+    size={24}
+    color="white"
+    style={{ marginHorizontal: 10 }}
+  />
+</TouchableOpacity>
+
+      </View>
+    </View>
+  );
+};
+
+
 const HomeScreen = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,6 +125,54 @@ const HomeScreen = () => {
   const [proPicModal, setProfileModalOpen] = useState(false);
   const [proPic, setProPic] = useState(null);
   const [viewMode, setViewMode] = useState('all');
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedChats, setSelectedChats] = useState([]);
+
+
+ 
+
+  const handleLongPress = (item) => {
+  setIsSelectionMode(true);
+  setSelectedChats([item]);
+};
+
+const handleSelectItem = (item) => {
+  if (!isSelectionMode) {
+    handleUserClick(
+      item.touserId,
+      item.name,
+      item.type,
+      item.groupId,
+      item.firstname,
+      item.avatar,
+      item?.muted,
+      item?.unreadcount
+    );
+    return;
+  }
+
+  const alreadySelected = selectedChats.find(chat => chat.id === item.id);
+
+  if (alreadySelected) {
+    const updated = selectedChats.filter(chat => chat.id !== item.id);
+    setSelectedChats(updated);
+
+    if (updated.length === 0) {
+      setIsSelectionMode(false);
+    }
+  } else {
+    setSelectedChats([...selectedChats, item]);
+  }
+};
+
+
+
+
+const exitSelectionMode = () => {
+  setIsSelectionMode(false);
+  setSelectedChats([]);
+};
+
 
   useEffect(() => {
     // alert(JSON.stringify(profile.username))
@@ -91,6 +222,14 @@ const HomeScreen = () => {
   }, []);
 
 
+  useEffect(() => {
+  const interval = setInterval(() => {
+    dispatch(getListConversation(userId, viewMode));
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [userId, viewMode]);
+
   useFocusEffect(
     React.useCallback(() => {
       onRefresh();
@@ -99,18 +238,18 @@ const HomeScreen = () => {
     }, [])
   );
 
-  const fetchConversations = () => {
-    setLoading(true);
-    // alert(viewModex)
-    dispatch(getListConversation(userId, viewMode)),
-      dispatch(getUserProfile(userId))
-    setLoading(false);
-  };
+const fetchConversations = () => {
+  setLoading(true);
 
-  useEffect(() => {
+  dispatch(getListConversation(userId, viewMode));
+  dispatch(getUserProfile(userId));
+  setLoading(false);
+};
+useFocusEffect(
+  React.useCallback(() => {
     fetchConversations();
   }, [viewMode])
-
+);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -159,13 +298,28 @@ const HomeScreen = () => {
     pinChart: convo?.pinned
   })) || [];
 
+//   const chats = conversationList?.map((convo, index) => ({
+//   id: index + 1,
+//   name: convo.username,
+//   lastMessage: convo.lastmessage,
+//   timestamp: moment(convo.lastmessagetimestamp).format("hh:mm A"),
+//   avatar: convo.image,
+//   firstname: convo.name || convo.username,
+//   touserId: convo?._id,
+//   muted: convo.muted,
+//   pinChart: convo.pinned,
+//   favourited: convo.favourited
+// })) || [];
+
+  
+
   // Filter chats based on the search term
   const filteredChats = chats.filter((chat) =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const handleUserClick = (userId, username, type, groupId, firstname, avatar, muted) => {
+  const handleUserClick = (userId, username, type, groupId, firstname, avatar, muted,unreadcount) => {
     if (type === "user") {
-      navigation.navigate("ChatScreen", { touserId: userId, username, firstname, userProfileImage: avatar, muted }
+      navigation.navigate("ChatScreen", { touserId: userId, username, firstname, userProfileImage: avatar, muted,unreadcount}
       );
     }
     else {
@@ -221,148 +375,156 @@ const HomeScreen = () => {
     };
   }, [profile?.username, navigation]);
 
-  function fnHandleMuteConvo() {
-
+ const fnHandleMuteConvo = () => {
+  selectedChats.forEach((item) => {
     dispatch(
-      muteChatUsers(userId, selectedId.name, (response) => {
-        // console.log(response.message, 'deleteMessage')
-        setModalOpen(!modalOpen);
-        Toast.show({
-          text1: response.message,
-          type: 'success',
-          position: 'top',
-        });
-        onRefresh();
+      muteChatUsers(userId, item.name, (response) => {
+        console.log(response.message);
       })
     );
-  }
+  });
+
+  exitSelectionMode();
+  onRefresh();
+};
 
 
-  function fnDeleteConvo() {
-    console.log(userId, selectedId.name);
+const fnDeleteConvo = () => {
+  selectedChats.forEach((item) => {
     dispatch(
-      deleteeChatUsers(userId, selectedId.name, (response) => {
-        setModalOpen(!modalOpen);
-        Toast.show({
-          text1: response.message,
-          type: 'success',
-          position: 'top',
-        });
-        onRefresh();
+      deleteeChatUsers(userId, item.name, (response) => {
+        console.log(response.message);
       })
     );
-  }
+  });
 
-  function fnFavourotConvo() {
+  exitSelectionMode();
+  onRefresh();
+};
 
+
+const fnFavourotConvo = () => {
+  selectedChats.forEach((item) => {
     dispatch(
-      makeFavChatUsers(userId, selectedId.name, (response) => {
-        // console.log(response.message, 'deleteMessage')
-        setModalOpen(!modalOpen);
-        Toast.show({
-          text1: response.message,
-          type: 'success',
-          position: 'top',
-        });
-        onRefresh();
+      makeFavChatUsers(userId, item.name, (response) => {
+        console.log(response.message);
       })
     );
-  }
+  });
 
-  // fnPinChat
-  function fnPinChat() {
+  exitSelectionMode();
+  onRefresh();
+};
 
+
+  // fnPinChat 
+const fnPinChat = () => {
+  selectedChats.forEach((item) => {
     dispatch(
-      pinChatinHome(userId, selectedId?.name, (response) => {
-        // console.log(response.message, 'deleteMessage')
-        setModalOpen(!modalOpen);
-        Toast.show({
-          text1: response.message,
-          type: 'success',
-          position: 'top',
-        });
-        onRefresh();
+      pinChatinHome(userId, item.name, (response) => {
+        console.log(response.message);
       })
     );
-  }
+  });
+
+  exitSelectionMode();
+  onRefresh();
+};
 
 
 
-  const renderItem = ({ item, handleopenModalBox, handleShowProfilePic }) => {
 
+  const renderItem = ({ item }) => {
 
-    return (
-      <TouchableWithoutFeedback
-        onLongPress={() => handleopenModalBox(item)}
+  const isSelected = selectedChats.find(chat => chat.id === item.id);
 
-        onPress={() => handleUserClick(item.touserId, item.name, item.type, item.groupId, item.firstname, item.avatar,
-          item?.muted
-        )}
-      >
-        <View style={[styles.item, !item.seen && styles.unseenItem]}>
-          <TouchableOpacity onPress={() => handleShowProfilePic(item.avatar)}>
-            <Image source={item.avatar ? { uri: item.avatar } : ""} style={styles.avatar} />
-          </TouchableOpacity>
-          <View style={styles.textContainer}>
-            <Text
-              numberOfLines={1}
-              style={[
-                styles.name,
-                Louis_George_Cafe.bold.h8,
-                { color: COLORS.white, textTransform: 'capitalize' }
-              ]}
-            >
-              {item.firstname}
-            </Text>
-            <Text
-              numberOfLines={1}
-              style={[
-                styles.lastMessage,
-                Louis_George_Cafe.regular.h9,
-                { color: COLORS.next_bg_color }
-              ]}
-            >
-              {item?.lastMessage}
-            </Text>
-          </View>
-          <View style={styles.timestampContainer}>
-            <Text
-              style={[
-                Louis_George_Cafe.regular.h9,
-                styles.timestamp,
-                { color: COLORS.timestamp }
-              ]}
-            >
-              {item?.lastmessagetimestamp}
-            </Text>
-            {item.unreadcount > 0 && (
-              <View style={[styles.circle, { backgroundColor: COLORS.button_bg_color }]}>
-                <Text style={[styles.circleText, { color: COLORS.black }]}>
-                  {item?.unreadcount}
-                </Text>
-              </View>
-            )}
-            {
-              item?.muted == 1 &&
-              <View>
-                <Image tintColor={"#000"} source={require('../../assets/animations/mute.png')} style={{
-                  width: wp(3),
-                  height: wp(3),
-                  margin: wp(1)
-                }} />
-              </View>
-            }
-            {
-              item?.pinChart == 1 &&
-              <View style={{ margin: wp(1) }}>
-                <MaterialCommunityIcons name="pin-outline" size={wp(3)} />
-              </View>
-            }
-          </View>
+  return (
+    <TouchableWithoutFeedback
+      onLongPress={() => handleLongPress(item)}
+      onPress={() => handleSelectItem(item)}
+    >
+      <View style={[
+        styles.item,
+        isSelected && { backgroundColor: "#e6d4ff" }
+      ]}>
+
+        <Image
+         source={item.avatar ? { uri: item.avatar } : require('../../assets/nodp.jpg')}
+         // source={ item.avatar  }
+          style={styles.avatar}
+        />
+
+        <View style={styles.textContainer}>
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.name,
+              Louis_George_Cafe.bold.h8,
+              { color: COLORS.white }
+            ]}
+          >
+            {item.firstname}
+          </Text>
+
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.lastMessage,
+              Louis_George_Cafe.regular.h9,
+              { color: COLORS.next_bg_color }
+            ]}
+          >
+            {item?.lastMessage}
+          </Text>
         </View>
-      </TouchableWithoutFeedback>
-    );
-  };
+
+        <View style={styles.timestampContainer}>
+          <Text style={[
+            Louis_George_Cafe.regular.h9,
+            { color: COLORS.timestamp }
+          ]}>
+            {item?.lastmessagetimestamp}
+          </Text>
+
+          {item.unreadcount > 0 && (
+            <View style={[
+              styles.circle,
+              { backgroundColor: COLORS.button_bg_color }
+            ]}>
+              <Text style={styles.circleText}>
+                {item?.unreadcount}
+              </Text>
+            </View>
+          )}
+        </View>
+        <View style={{ flexDirection: "row", marginTop: 4 }}>
+
+  {item.muted == 1 && (
+    <Icon
+      name="volume-mute"
+      size={16}
+      color="gray"
+      style={{ marginHorizontal: 4 }}
+    />
+  )}
+
+  {item.pinChart == 1 && (
+    <MaterialCommunityIcons
+      name="pin"
+      size={16}
+      color="gray"
+      style={{ marginHorizontal: 4 }}
+    />
+  )}
+
+</View>
+
+
+      </View>
+    </TouchableWithoutFeedback>
+  );
+};
+
 
   function handleopenModalBox(item) {
     // alert(JSON.stringify(item))
@@ -379,8 +541,20 @@ const HomeScreen = () => {
   }
   return (
     <View style={[styles.container, { backgroundColor: COLORS.black }]}>
-      <HeaderComponent profile={profile} />
-      <NewChatComponent />
+      {isSelectionMode ? (
+  <SelectionHeader
+    selectedChats={selectedChats}
+    exitSelectionMode={exitSelectionMode}
+    fnDeleteConvo={fnDeleteConvo}
+    fnHandleMuteConvo={fnHandleMuteConvo}
+    fnPinChat={fnPinChat}
+    fnFavourotConvo={fnFavourotConvo}
+  />
+) : (
+  <HeaderComponent profile={profile} />
+)}
+
+      {/* <NewChatComponent /> */}
       <Toast zIndex={1} />
       <SearchComponent searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       <View style={{ flexDirection: 'row', alignSelf: "flex-start", marginHorizontal: hp(1) }}>
@@ -462,8 +636,9 @@ const HomeScreen = () => {
       ) : (
         <FlatList
           data={conversationList?.length !== 0 ? filteredChats : []}
+          extraData={filteredChats}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => renderItem({ item, handleopenModalBox, handleShowProfilePic })}
+         renderItem={({ item }) => renderItem({ item })}
           ListEmptyComponent={<View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No chats available</Text>
           </View>}
@@ -483,7 +658,7 @@ const HomeScreen = () => {
         >
           <View style={styles.modalOverlay}>
             <View style={{
-              // backgroundColor: 'white',
+              // backgroundColor: 'white',  
               padding: wp(1),
               borderRadius: wp(5),
               width: wp(90),
@@ -497,89 +672,19 @@ const HomeScreen = () => {
               }]} />
             </View>
           </View>
-        </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback> 
       </Modal>
       {/*  */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalOpen}
-      // onRequestClose={() => setModalOpen(!modalOpen)}
-      >
-        <TouchableWithoutFeedback
-          onPress={() => setModalOpen(!modalOpen)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <TouchableOpacity
-                onPress={() => setModalOpen(!modalOpen)}
-                style={{
-                  marginHorizontal: wp(2),
-                  padding: wp(0.5),
-                  borderRadius: wp(5),
-                  alignSelf: 'flex-end',
-                  marginHorizontal: wp(4),
-                  marginTop: wp(2)
-                }}
-              >
-                <Icon name="close" size={30} color={COLORS.white} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => fnHandleMuteConvo()} style={styles.closeButton}>
-                <Text numberOfLines={1} style={[Louis_George_Cafe.regular.h7, styles.closeButtonText, {
-                }]}>{selectedId?.muted == 1 ? 'Unmute ' : "Mute "}
-                  <Text numberOfLines={1} style={[Louis_George_Cafe.bold.h6, styles.closeButtonText, {
-                  }]}>{selectedId?.name}</Text>
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => fnDeleteConvo()} style={styles.closeButton}>
-                <Text numberOfLines={1} style={[Louis_George_Cafe.regular.h7, styles.closeButtonText, {
-                }]}>{`Delete `}
-                  <Text numberOfLines={1} style={[Louis_George_Cafe.bold.h6, styles.closeButtonText, {
-                  }]}>{selectedId?.name}</Text>
-                </Text>
-              </TouchableOpacity>
-
-
-              <TouchableOpacity onPress={() => fnFavourotConvo()} style={styles.closeButton}>
-                <Text numberOfLines={1} style={[Louis_George_Cafe.regular.h7, styles.closeButtonText, {
-                }]}>{selectedId?.favourited == '1' ? `Remove from Favourites ` : 'Favourite'}
-                  {/* <Text numberOfLines={1} style={[Louis_George_Cafe.bold.h6, styles.closeButtonText, {
-                  }]}>{selectedId?.favourited}</Text> */}
-                </Text>
-
-                {/* favourited */}
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => fnPinChat()} style={styles.closeButton}>
-                <Text numberOfLines={1} style={[Louis_George_Cafe.regular.h7, styles.closeButtonText, {
-                }]}>{selectedId?.pinChart == '1' ? `Remove Pin` : 'Pin Chart'}
-                  {/* <Text numberOfLines={1} style={[Louis_George_Cafe.bold.h6, styles.closeButtonText, {
-                  }]}>{selectedId?.favourited}</Text> */}
-                </Text>
-              </TouchableOpacity>
-
-
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
     </View>
   );
 };
 
 const HeaderComponent = (profile) => {
-
-
   const navigation = useNavigation();
 
   const handleNavigateProfileScreen = () => {
     navigation.navigate("ProfileScreen");
   };
-
-  const handleNavigateSettingScreen = () => {
-    navigation.navigate("ChangePasswordScreen");
-  };
-
 
   return (
     <LinearGradient colors={["#F0F0F0", "#FFF"]} style={styles.headContainer}>
@@ -600,20 +705,21 @@ const HeaderComponent = (profile) => {
         position: 'relative', right: wp(2)
       }}>
         <TouchableOpacity
-          style={{
+         style={{
             borderWidth: wp(0.5),
             borderColor: "#a020cb",
             marginHorizontal: wp(2),
             padding: wp(0.5),
-            borderRadius: wp(4)
+            borderRadius: wp(1)
           }}
-          onPress={() => { handleNavigateSettingScreen() }}
-        >
-          <Icon name="settings" size={wp(6)} color={COLORS.white} />
-        </TouchableOpacity>
+        onPress={() => navigation.navigate("NewChat")}
+      >
+        <Icon name="add" size={24} color={COLORS.white} />
+      </TouchableOpacity>
+        
 
         <TouchableOpacity onPress={() => { handleNavigateProfileScreen() }}>
-          <Image source={profile?.profile?.profilepicture ? { uri: profile?.profile?.profilepicture } : ""} style={{
+          <Image  source={profile?.profile?.profilepicture ? { uri: profile?.profile?.profilepicture } : ""} style={{
             width: wp(8),
             height: wp(8),
             borderRadius: wp(6),
@@ -627,38 +733,6 @@ const HeaderComponent = (profile) => {
   );
 };
 
-const NewChatComponent = () => {
-  const navigation = useNavigation();
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center" }}>
-      <Text
-        style={[
-          Louis_George_Cafe.bold.h6,
-          {
-            marginHorizontal: wp(5),
-            marginBottom: wp(1),
-            alignSelf: "center",
-            color: COLORS.white,
-          }]}
-      >
-        Chats
-      </Text>
-      <TouchableOpacity
-        style={{
-          resizeMode: "stretch",
-          borderWidth: 1.5,
-          position: "absolute",
-          right: 20,
-          borderRadius: 5,
-          borderColor: "#a020cb",
-        }}
-        onPress={() => navigation.navigate("NewChat")}
-      >
-        <Icon name="add" size={24} color={COLORS.white} />
-      </TouchableOpacity>
-    </View>
-  );
-};
 
 const SearchComponent = ({ searchTerm, setSearchTerm }) => {
   return (
@@ -676,7 +750,7 @@ const SearchComponent = ({ searchTerm, setSearchTerm }) => {
         placeholder="Search..."
         placeholderTextColor={COLORS.white}
         color={COLORS.white}
-      // placeholderStyle={{ fontFamily: Louis_George_Cafe.regular.h9}} // Style the placeholder text
+      // placeholderStyle={{ fontFamily: Louis_George_Cafe.regular.h9}} // Style the placeholder text 
       />
 
     </View>
@@ -687,24 +761,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  settingIcon: {
-    width: wp(13),
-    height: wp(13),
-    marginHorizontal: wp(2)
-  },
   headContainer: {
     flexDirection: "row",
     justifyContent: 'space-between',
     alignItems: "center",
-    paddingVertical: wp(4),
+    paddingVertical: wp(2),
   },
   iconContainer: {
     marginRight: wp(4),
     paddingHorizontal: wp(2)
-  },
-  settingsBtn: {
-    flexDirection: "row",
-    marginHorizontal: wp(6),
   },
   textContainer: {
     flex: 1,
@@ -742,7 +807,7 @@ const styles = StyleSheet.create({
     height: wp(12.5),
     borderRadius: wp(6.25),
     borderColor: COLORS.button_bg_color,
-    borderWidth: wp(0.5),
+    borderWidth: wp(0.4),
     marginRight: wp(2),
   },
 
@@ -775,7 +840,7 @@ const styles = StyleSheet.create({
     height: hp(5),
     borderRadius: wp(50),
     paddingHorizontal: wp(2),
-    marginTop: hp(2),
+    marginTop: hp(1),
     marginBottom: hp(1),
   },
   textInput: {
@@ -828,10 +893,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textTransform: "capitalize"
   },
-
-
-
-
 
 });
 

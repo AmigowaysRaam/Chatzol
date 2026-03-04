@@ -1,146 +1,64 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, Image, Modal, Alert
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ImageBackground,
 } from "react-native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Louis_George_Cafe } from "../../resources/fonts";
-import { wp, hp } from "../../resources/dimensions";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { LinearGradient } from "expo-linear-gradient";
-import { COLORS } from "../../resources/Colors";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getStaredMessage, unStarMessages } from "../../redux/authActions";
-import moment from "moment"; // Import moment.js for date formatting
+import moment from "moment";
 import Toast from "react-native-toast-message";
+import { wp, hp } from "../../resources/dimensions";
+import { COLORS } from "../../resources/Colors";
 
-const StaredMessages = () => {
+const StarredMessagesScreen = () => {
   const navigation = useNavigation();
-  const Stack = createNativeStackNavigator();
   const dispatch = useDispatch();
   const userId = useSelector((state) => state.auth.user?._id);
 
   const [starredMessages, setStarredMessages] = useState([]);
-  const [refreshing, setRefreshing] = useState(false); // Track refresh state
-  const [modalVisible, setModalVisible] = useState(false); // Modal visibility for "More" menu
-  const [selectedMessage, setSelectedMessage] = useState(null); // To store the selected message for options
-
-  // Fetch starred messages
-  const fetchStarredMessages = () => {
-    setRefreshing(true); // Set refreshing state to true
-    dispatch(
-      getStaredMessage(userId, (response) => {
-        setStarredMessages(response.data);
-        setRefreshing(false); // Set refreshing state to false after data is fetched
-      })
-    );
-  };
-
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchStarredMessages();
   }, []);
 
-  const HeaderComponent = ({ handleAlertUnstart }) => {
-    return (
-      <>
-        <LinearGradient colors={["#F0F0F0", "#FFF"]} style={styles.headContainer}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconContainer}>
-            <MaterialIcons name="arrow-back" size={28} color={COLORS.white} />
-          </TouchableOpacity>
-          <View style={{ maxWidth: wp(100), flex: 1, alignItems: "center" }}>
-            <Text numberOfLines={1} style={[styles.headingName, Louis_George_Cafe.bold.h5, { color: COLORS.white }]}>
-              {"Starred Messages"}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.morButton, { marginHorizontal: wp(2), marginTop: wp(1) }]}
-            onPress={() => {
-              handleAlertUnstart();
-            }}
-          >
-            <MaterialIcons name="star" size={28} color={COLORS.white} />
-          </TouchableOpacity>
-        </LinearGradient>
-        <View style={{ height: 1, backgroundColor: "#9999", marginTop: wp(1) }} />
-      </>
+  const fetchStarredMessages = () => {
+    setRefreshing(true);
+    dispatch(
+      getStaredMessage(userId, (response) => {
+        setStarredMessages(response?.data || []);
+        setRefreshing(false);
+      })
     );
   };
 
-  const renderItem = ({ item }) => {
-    // Format the timestamp
-    const formattedTimestamp = moment(item.createdAt).format("MMM D, YYYY [at] h:mm A");
-
-    return (
-      <View style={[styles.messageContainer]}>
-        <View style={styles.profileContainer}>
-          <Image source={{ uri: item.profilepicture }} style={styles.profilepicture} />
-          <Text style={[styles.userName, Louis_George_Cafe.bold.h9]}>
-            {item.name}
-          </Text>
-        </View>
-        <Text numberOfLines={6} style={[styles.messageText, Louis_George_Cafe.regular.h8, { color: COLORS.white }]}>
-          {item?.message}
-        </Text>
-        <TouchableOpacity
-          style={styles.moreButton}
-          onPress={() => {
-            setSelectedMessage(item); // Set the selected message
-            setModalVisible(true); // Show the modal with the "More" options
-          }}
-        >
-          {/* <MaterialIcons name="more-vert" size={22} color={COLORS.white} /> */}
-        </TouchableOpacity>
-        {/* Timestamp */}
-        <Text style={[styles.timestampText, Louis_George_Cafe.regular.h9]}>
-          {item?.createddatetime}
-        </Text>
-      </View>
-    );
-  };
-
-  // Handler for the "More" menu options
-  const handleMenuOption = (option) => {
-    switch (option) {
-      case "reply":
-        console.log("Reply to:", selectedMessage);
-        break;
-      case "delete":
-        console.log("Delete message:", selectedMessage);
-        break;
-      default:
-        console.log("Option not available");
-    }
-    setModalVisible(false); // Close the modal after selecting an option
-  };
-
-  const fnhandleAlertUnstart = () => {
+  const unstarAllMessages = () => {
     Alert.alert(
       "Unstar All Messages",
-      "Are you sure you want to unstar all messages?",
+      "Are you sure you want to remove starred status for all messages?",
       [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Yes",
           onPress: () => {
-            // console.log("All messages have been unstarred.");
             dispatch(
               unStarMessages(userId, (response) => {
-
                 fetchStarredMessages();
                 Toast.show({
-                  text1: response.message,
-                  type: 'success',
-                  position: 'top',
+                  text1: response?.message || "All messages unstarred",
+                  type: "success",
                 });
               })
             );
-
-            // Add functionality here to unstar all messages
-            // setStarredMessages([]); // Example: clear the starred messages
           },
         },
       ],
@@ -148,155 +66,189 @@ const StaredMessages = () => {
     );
   };
 
-  // useEffect(() => {
-  //   Toast.show({
-  //     text1: "response.message",
-  //     type: 'success',
-  //     position: 'top',
-  //   })
-  // }, [])
+  const openChatMessage = (message) => {
+    navigation.navigate("ChatScreen", {
+      touserId: message.senderId ?? message.fromuserid,
+      username: message.senderUsername ?? message.fromusername,
+      firstname: message.name,
+      userProfileImage: message.profilepicture,
+      muted: message.muted ?? 0,
+      unreadcount: message.unreadcount ?? 0,
+      messageToHighlight: message.messageid ?? message.id,
+      fromStarred: true,
+    });
+  };
+
+  const renderItem = ({ item }) => {
+    return (
+      <TouchableOpacity
+        style={styles.messageContainer}
+        activeOpacity={0.8}
+        onPress={() => openChatMessage(item)}
+      >
+        {/* Green Star Icon */}
+        <MaterialIcons
+          name="star"
+          size={18}
+          color="#555"
+          style={styles.starIcon}
+        />
+
+        {/* Profile + Name */}
+        <View style={styles.profileContainer}>
+          <Image
+            source={item.profilepicture}
+            style={[styles.profilepicture,{borderColor:COLORS.button_bg_color,borderWidth:wp(0.5)}]}
+          />
+          <Text style={styles.userName}>{item.name}</Text>
+        </View>
+
+        {/* Message */}
+        <Text numberOfLines={3} style={styles.messageText}>
+          {item?.message}
+        </Text>
+
+        {/* Timestamp */}
+        <Text style={styles.timestampText}>
+          {item?.createddatetime}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <SafeAreaView style={{ backgroundColor: COLORS.black, flex: 1 }}>
-      <HeaderComponent handleAlertUnstart={fnhandleAlertUnstart} />
-      {
-        starredMessages?.length == 0 ?
-          <Text style={[styles.emptyText, Louis_George_Cafe.regular.h7, {
-            color: COLORS.white,
-            alignSelf: "center",
-            marginVertical: wp(10)
-          }]}>No starred messages available.</Text>
-          :
-          <FlatList
-            data={starredMessages}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.messageList}
-            refreshing={refreshing} // Enable pull-to-refresh
-            onRefresh={fetchStarredMessages} // Handle refresh event
-          />
-      }
-      <Toast zIndex={1} />
+    <ImageBackground source={require("../../assets/chatbg.jpg")} style={styles.imageBackground}>
+    <SafeAreaView style={styles.container}>
+      {/* HEADER */}
+      <View style={[styles.header,{backgroundColor:"#F0F0F0"}]}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <MaterialIcons name="arrow-back" size={26} color="#000" />
+        </TouchableOpacity>
 
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
+        <Text style={styles.headerTitle}>Starred Messages</Text>
 
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity onPress={() => handleMenuOption("reply")}>
-              <Text style={styles.modalOption}>Reply</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleMenuOption("delete")}>
-              <Text style={styles.modalOption}>Delete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalOption}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
+        <TouchableOpacity onPress={unstarAllMessages}>
+          <MaterialIcons name="star" size={26}  color="#000" />
+        </TouchableOpacity>
+      </View>
+
+      {/* EMPTY STATE */}
+      {starredMessages.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <MaterialIcons name="star-border" size={60} color="#bbb" />
+          <Text style={styles.emptyText}>
+            No starred messages available.
+          </Text>
         </View>
-      </Modal>
+      ) : (
+        <FlatList
+          data={starredMessages}
+          keyExtractor={(item, index) =>
+            item.id?.toString() ?? index.toString()
+          }
+          renderItem={renderItem}
+          contentContainerStyle={styles.messageList}
+          refreshing={refreshing}
+          onRefresh={fetchStarredMessages}
+          ItemSeparatorComponent={() => <View style={{ height: hp(1.5) }} />}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      <Toast />
     </SafeAreaView>
+    </ImageBackground>
   );
 };
 
+export default StarredMessagesScreen;
+
 const styles = StyleSheet.create({
+  // container: {
+  //   flex: 1,
+  //   backgroundColor: "#ECE5DD", // WhatsApp chat background
+  // },
+  imageBackground: {
+    flex: 1,
+    height: hp(100),
+  },
 
-  headContainer: {
-    width: wp(100),
+  header: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: hp(1),
     paddingHorizontal: wp(4),
+    paddingVertical: hp(2),
+    alignItems: "center",
+    justifyContent: "space-between",
+
   },
 
-  headingName: {
-    fontSize: wp(6),
-    color: COLORS.white,
-  },
-
-  iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+  headerTitle: {
+    color: "#000",
+    fontSize: wp(5),
+    fontWeight: "600",
   },
 
   messageList: {
-    padding: wp(4),
+    padding: wp(3),
   },
 
   messageContainer: {
-
-    backgroundColor: "#ddd",
-    borderTopEndRadius: wp(2),
-    borderTopLeftRadius: wp(2),
-    borderBottomLeftRadius: wp(2),
-    padding: wp(1),
-    maxWidth: wp(60),
-    marginVertical: wp(1),
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: wp(4),
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
   },
 
-  sender: {
-    alignSelf: 'flex-end',  // Sender's message aligned to the right
-    backgroundColor: "green",  // Background color for sender messages
-  },
-
-  receiver: {
-    alignSelf: 'flex-start',  // Receiver's message aligned to the left
-    backgroundColor: COLORS.search_bg_color,  // Background color for receiver messages
-  },
-
-  messageText: {
-    fontSize: wp(4.5),
-    color: COLORS.white,  // White text for both sender and receiver
+  starIcon: {
+    position: "absolute",
+    right: 12,
+    top: 12,
   },
 
   profileContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: wp(2),
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: hp(1),
   },
 
   profilepicture: {
-    width: wp(4),
-    height: wp(4),
-    borderRadius: wp(4),
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(7),
     marginRight: wp(3),
-    margin: wp(1)
+    
   },
 
   userName: {
-    color: COLORS.black,
+    fontSize: wp(4),
+    fontWeight: "600",
+    color: "#111",
   },
 
-  moreButton: {
-    position: 'absolute',
-    right: wp(2),
-    top: wp(4),
+  messageText: {
+    fontSize: wp(4),
+    color: "#222",
+    marginBottom: hp(0.5),
   },
 
   timestampText: {
-    color: COLORS.gray,  // Gray color for the timestamp
-    textAlign: 'right',
+    fontSize: wp(3),
+    color: "#666",
+    textAlign: "right",
   },
-  modalBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+
+  emptyContainer: {
+    marginTop: hp(20),
+    alignItems: "center",
   },
-  modalContent: {
-    backgroundColor: COLORS.white,
-    padding: wp(4),
-    borderRadius: wp(2),
-  },
-  modalOption: {
+
+  emptyText: {
+    marginTop: hp(2),
     fontSize: wp(4),
-    paddingVertical: wp(2),
-    color: COLORS.black,
+    color: "#666",
+    textAlign: "center",
   },
 });
-
-export default StaredMessages;

@@ -1,8 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Keyboard, ScrollView } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Keyboard,
+  ScrollView,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { hp, wp } from "../../resources/dimensions";
-import { Louis_George_Cafe } from "../../resources/fonts";
 import { COLORS } from "../../resources/Colors";
 import { loginUser, registerUser } from "../../redux/authActions";
 import { useDispatch } from "react-redux";
@@ -14,17 +21,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+
   const [fullname, setFullname] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phonenumber, setPhonenumber] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // Added state for confirm password
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false); // State for toggling confirm password visibility
-
-  const dispatch = useDispatch();
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
 
   const [errors, setErrors] = useState({
     fullname: "",
@@ -32,32 +40,30 @@ const RegisterScreen = () => {
     email: "",
     phonenumber: "",
     password: "",
-    confirmPassword: "", // Added error state for confirm password
+    confirmPassword: "",
   });
 
-  const togglePasswordVisibility = () => {
+  const togglePasswordVisibility = () =>
     setIsPasswordVisible(!isPasswordVisible);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
+  const toggleConfirmPasswordVisibility = () =>
     setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
-  };
 
-  const resetForm = () => {
-    setFullname("");
-    setUsername("");
-    setEmail("");
-    setPhonenumber("");
-    setPassword("");
-    setConfirmPassword(""); // Reset confirm password
+  const fnAlert = (message) => {
+    Toast.show({
+      text1: "Error",
+      text2: message,
+      type: "error",
+    });
   };
 
   const handleRegister = () => {
-
     Keyboard.dismiss();
-    const regEmail = /^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/;
+
+    const regEmail =
+      /^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/;
     const regPhone = /^[0-9]{10}$/;
-    const regPassword = /^[A-Za-z\d@$!%*?&]{4,16}$/;
+    const regPassword =
+      /^[A-Za-z\d@$!%*?&]{4,16}$/;
 
     let errorsTemp = {
       fullname: "",
@@ -70,17 +76,17 @@ const RegisterScreen = () => {
 
     let isValid = true;
 
-    if (fullname.trim().length === 0) {
+    if (!fullname.trim()) {
       errorsTemp.fullname = "Full name is required";
       isValid = false;
     }
 
-    if (username.trim().length === 0) {
+    if (!username.trim()) {
       errorsTemp.username = "Username is required";
       isValid = false;
     }
 
-    if (email.trim().length === 0) {
+    if (!email.trim()) {
       errorsTemp.email = "Email is required";
       isValid = false;
     } else if (!regEmail.test(email)) {
@@ -88,306 +94,365 @@ const RegisterScreen = () => {
       isValid = false;
     }
 
-    if (phonenumber.trim().length === 0) {
+    if (!phonenumber.trim()) {
       errorsTemp.phonenumber = "Phone number is required";
       isValid = false;
-
     } else if (!regPhone.test(phonenumber)) {
-      errorsTemp.phonenumber = "Phone number must be exactly 10 digits";
+      errorsTemp.phonenumber =
+        "Phone number must be exactly 10 digits";
       isValid = false;
     }
 
-    if (password.trim().length === 0) {
+    if (!password.trim()) {
       errorsTemp.password = "Password is required";
       isValid = false;
     } else if (!regPassword.test(password)) {
-      errorsTemp.password = "Password must be between 4 and 16 characters";
+      errorsTemp.password =
+        "Password must be between 4 and 16 characters";
       isValid = false;
     }
 
-    if (confirmPassword.trim().length === 0) {
-      errorsTemp.confirmPassword = "Please confirm your password";
+    if (!confirmPassword.trim()) {
+      errorsTemp.confirmPassword =
+        "Please confirm your password";
       isValid = false;
     } else if (confirmPassword !== password) {
-      errorsTemp.confirmPassword = "Passwords do not match";
+      errorsTemp.confirmPassword =
+        "Passwords do not match";
       isValid = false;
     }
 
     setErrors(errorsTemp);
 
-    if (isValid) {
-      setIsLoading(true);
-      const userData = {
-        fullname,
-        username,
-        email,
-        phonenumber,
-        password,
-      };
+    if (!isValid) return;
 
-      dispatch(
-        registerUser(userData, (response) => {
-          setIsLoading(false);
-          if (response.success) {
-            Toast.show({
-              text1: "Success",
-              text2: response.message,
-              type: "success",
-            });
+    setIsLoading(true);
 
-            setTimeout(() => {
-              const credentials = { username, password };
-              dispatch(loginUser(credentials, (loginResponse) => {
+    const userData = {
+      fullname,
+      username,
+      email,
+      phonenumber,
+      password,
+    };
+
+    dispatch(
+      registerUser(userData, (response) => {
+        setIsLoading(false);
+
+        if (response.success) {
+          Toast.show({
+            text1: "Success",
+            text2: response.message,
+            type: "success",
+          });
+
+          setTimeout(() => {
+            dispatch(
+              loginUser({ username, password }, (loginResponse) => {
                 if (loginResponse) {
-                  AsyncStorage.setItem('user_data', JSON.stringify(loginResponse.data));
+                  AsyncStorage.setItem(
+                    "user_data",
+                    JSON.stringify(loginResponse.data)
+                  );
                   navigation.reset({
                     index: 0,
                     routes: [{ name: "HomeScreen" }],
                   });
                 }
-              }));
-            }, 1000);
-          } else {
-            fnAlert(response.message); // Use the response message correctly
-          }
-        })
-      );
-    } else {
-      setIsLoading(false); // Handle the case where validation fails
-    }
+              })
+            );
+          }, 1000);
+        } else {
+          fnAlert(response.message);
+        }
+      })
+    );
   };
 
-  function fnAlert(response) {
-    Toast.show({
-      text1: "Error",
-      text2: response, // Use the response here
-      type: "error",
-    });
-  }
-
-
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Toast />
-
-      <Text style={[Louis_George_Cafe.bold.h2, styles.header]}>Register</Text>
-
-      <TextInputComponent
-        maxLength={20}
-        title="Full Name"
-        value={fullname}
-        onChangeText={(text) => {
-          const noNumbersOrSpecialChars = text.replace(/[^a-zA-Z\s]/g, ''); // Only allow letters and spaces
-          setFullname(noNumbersOrSpecialChars);
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            fullname: null,
-          }));
-        }}
-      />
-
-
-      {errors.fullname && (
-        <Text style={[styles.error, { color: COLORS.validation }]}>{errors.fullname}</Text>
-      )}
-
-      <TextInputComponent
-        title="Username"
-        maxLength={20}
-        value={username}
-        onChangeText={(text) => {
-          const filteredText = text.replace(/[^a-zA-Z0-9_]/g, '');
-          setUsername(filteredText);
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            username: null,
-          }));
-        }}
-      />
-
-      {errors.username && (
-        <Text style={[styles.error, { color: COLORS.validation }]}>{errors.username}</Text>
-      )}
-
-      <TextInputComponent
-        title="Email"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={(text) => {
-          const filteredText = text.trim();
-          setEmail(filteredText);
-          // Email validation regex
-          const regEmail = /^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/;
-
-          // If email doesn't match the regex, set an error
-          if (filteredText.length > 0 && !regEmail.test(filteredText)) {
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              email: "Invalid email format", // Set error message for invalid email
-            }));
-          } else {
-            // Clear error if email is valid
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              email: "", // Clear the email error
-            }));
-          }
-        }}
-      />
-      {errors.email && (
-        <Text style={[styles.error, { color: COLORS.validation }]}>{errors.email}</Text>
-      )}
-
-      <View style={styles.phoneContainer}>
-        <TextInputComponent
-          title="Phone Number"
-          keyboardType="phone-pad"
-          value={phonenumber}
-          onChangeText={(text) => {
-            const filteredText = text.replace(/\s/g, ''); // Remove spaces
-            if (/^\d*$/.test(filteredText) && filteredText.length <= 10) {
-              setPhonenumber(filteredText);
-              setErrors((prevErrors) => ({
-                ...prevErrors,
-                phonenumber: null,
-              }));
-            }
-          }}
-          maxLength={10}
-        />
-      </View>
-      {errors.phonenumber && (
-        <Text style={[styles.error, { color: COLORS.validation }]}>{errors.phonenumber}</Text>
-      )}
-
-      <View style={styles.passwordContainer}>
-        <TextInputComponent
-          title="Password"
-          maxLength={16}
-          value={password}
-          secureTextEntry={!isPasswordVisible}
-          onChangeText={(text) => {
-            const filteredText = text.trim();
-            setPassword(filteredText);
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              password: null,
-            }));
-          }}
-        />
-        <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
-          <Icon name={isPasswordVisible ? "eye-off" : "eye"} size={24} color={COLORS.white} />
-        </TouchableOpacity>
-      </View>
-      {errors.password && (
-        <Text style={[styles.error, { color: COLORS.validation }]}>{errors.password}</Text>
-      )}
-
-      {/* Confirm Password Field */}
-      <View style={styles.passwordContainer}>
-        <TextInputComponent
-          title="Confirm Password"
-          maxLength={16}
-          value={confirmPassword}
-          secureTextEntry={!isConfirmPasswordVisible}
-          onChangeText={(text) => {
-            const filteredText = text.trim();
-            setConfirmPassword(filteredText);
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              confirmPassword: null,
-            }));
-          }}
-        />
-        <TouchableOpacity onPress={toggleConfirmPasswordVisibility} style={styles.eyeIcon}>
-          <Icon name={isConfirmPasswordVisible ? "eye-off" : "eye"} size={24} color={COLORS.white} />
-        </TouchableOpacity>
-      </View>
-      {errors.confirmPassword && (
-        <Text style={[styles.error, { color: COLORS.validation }]}>{errors.confirmPassword}</Text>
-      )}
-
-      <ButtonComponent title={"Register"} isLoading={isLoading} onPress={handleRegister} />
-      <TouchableOpacity
-        // onPress={() => handleRegister()}
-        onPress={() =>
-          navigation.navigate("LoginScreen")
-        }
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={[Louis_George_Cafe.bold.h9, { color: COLORS.white, marginTop: hp(2) }]}>
-          If you already have an account, Click here to log in.
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <Toast />
+
+        {/* Header */}
+        <View style={styles.topSection}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>
+            Join us and start your journey today
+          </Text>
+        </View>
+
+        {/* Card */}
+        <View style={styles.card}>
+          <TextInputComponent
+            title="Full Name"
+            maxLength={20}
+            value={fullname}
+            onChangeText={(text) => {
+              const filtered = text.replace(
+                /[^a-zA-Z\s]/g,
+                ""
+              );
+              setFullname(filtered);
+              setErrors((prev) => ({
+                ...prev,
+                fullname: "",
+              }));
+            }}
+          />
+          {errors.fullname ? (
+            <Text style={styles.error}>
+              {errors.fullname}
+            </Text>
+          ) : null}
+
+          <TextInputComponent
+            title="Username"
+            maxLength={20}
+            value={username}
+            onChangeText={(text) => {
+              const filtered = text.replace(
+                /[^a-zA-Z0-9_]/g,
+                ""
+              );
+              setUsername(filtered);
+              setErrors((prev) => ({
+                ...prev,
+                username: "",
+              }));
+            }}
+          />
+          {errors.username ? (
+            <Text style={styles.error}>
+              {errors.username}
+            </Text>
+          ) : null}
+
+          <TextInputComponent
+            title="Email"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text.trim());
+              setErrors((prev) => ({
+                ...prev,
+                email: "",
+              }));
+            }}
+          />
+          {errors.email ? (
+            <Text style={styles.error}>
+              {errors.email}
+            </Text>
+          ) : null}
+
+          <TextInputComponent
+            title="Phone Number"
+            keyboardType="phone-pad"
+            value={phonenumber}
+            maxLength={10}
+            onChangeText={(text) => {
+              const filtered =
+                text.replace(/\D/g, "");
+              setPhonenumber(filtered);
+              setErrors((prev) => ({
+                ...prev,
+                phonenumber: "",
+              }));
+            }}
+          />
+          {errors.phonenumber ? (
+            <Text style={styles.error}>
+              {errors.phonenumber}
+            </Text>
+          ) : null}
+
+          {/* Password */}
+          <View style={styles.passwordWrapper}>
+            <TextInputComponent
+              title="Password"
+              value={password}
+              secureTextEntry={!isPasswordVisible}
+              onChangeText={(text) => {
+                setPassword(text.trim());
+                setErrors((prev) => ({
+                  ...prev,
+                  password: "",
+                }));
+              }}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={togglePasswordVisibility}
+            >
+              <Icon
+                name={
+                  isPasswordVisible
+                    ? "eye-off"
+                    : "eye"
+                }
+                size={22}
+                color={COLORS.primary}
+              />
+            </TouchableOpacity>
+          </View>
+          {errors.password ? (
+            <Text style={styles.error}>
+              {errors.password}
+            </Text>
+          ) : null}
+
+          {/* Confirm Password */}
+          <View style={styles.passwordWrapper}>
+            <TextInputComponent
+              title="Confirm Password"
+              value={confirmPassword}
+              secureTextEntry={
+                !isConfirmPasswordVisible
+              }
+              onChangeText={(text) => {
+                setConfirmPassword(text.trim());
+                setErrors((prev) => ({
+                  ...prev,
+                  confirmPassword: "",
+                }));
+              }}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={
+                toggleConfirmPasswordVisibility
+              }
+            >
+              <Icon
+                name={
+                  isConfirmPasswordVisible
+                    ? "eye-off"
+                    : "eye"
+                }
+                size={22}
+                color={COLORS.primary}
+              />
+            </TouchableOpacity>
+          </View>
+          {errors.confirmPassword ? (
+            <Text style={styles.error}>
+              {errors.confirmPassword}
+            </Text>
+          ) : null}
+
+         <TouchableOpacity
+  onPress={handleRegister}
+  activeOpacity={0.8}
+  style={styles.registerButton}
+  disabled={isLoading}
+>
+  <Text style={styles.registerButtonText}>
+    {isLoading ? "Loading..." : "Register"}
+  </Text>
+</TouchableOpacity>
+        </View>
+
+        {/* Login Link */}
+        <View style={styles.bottomContainer}>
+          <Text style={styles.loginText}>
+            Already have an account?
+          </Text>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("LoginScreen")
+            }
+          >
+            <Text style={styles.loginLink}>
+              {" "}
+              Login
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safe: {
     flex: 1,
     backgroundColor: COLORS.black,
   },
   scrollContent: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: wp(10),
+    padding: wp(6),
+    paddingBottom: hp(5),
   },
-  header: {
-    fontSize: 24,
-    marginBottom: 24,
-    textAlign: "center",
+  topSection: {
+    marginTop: hp(3),
+    marginBottom: hp(4),
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "bold",
     color: COLORS.white,
   },
-  input: {
-    width: wp(80),
-    height: hp(6),
-    marginTop: 10,
+  subtitle: {
+    fontSize: 14,
+    color: "#aaa",
+    marginTop: 5,
+  },
+  card: {
+    backgroundColor: "#e7caf0",
+    borderRadius: 18,
+    padding: wp(4),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  error: {
+    color: COLORS.validation,
+    marginTop: 5,
     marginBottom: 10,
-    paddingHorizontal: 8,
-    borderRadius: 10,
+    fontSize: 12,
   },
-  phoneContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: wp(80),
-    height: hp(6),
-    marginTop: 10,
-    borderRadius: 10,
-    marginVertical: wp(2),
-  },
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  passwordWrapper: {
     justifyContent: "center",
-    width: wp(80),
   },
   eyeIcon: {
     position: "absolute",
-    right: 10,
+    right: wp(3),
+    top: wp(6),
   },
-  error: {
-    marginBottom: 10,
-    textAlign: "left",
-  },
-  button: {
-    padding: 10,
-    width: wp(60),
-    height: hp(6),
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    marginTop: "20%",
-    shadowRadius: 2,
+  bottomContainer: {
+    flexDirection: "row",
     justifyContent: "center",
-    alignItems: "center",
+    marginTop: hp(4),
   },
-  loader: {
-    alignSelf: "center",
+  loginText: {
+    color: "#aaa",
   },
+  loginLink: {
+    color: COLORS.primary,
+    fontWeight: "bold",
+  },
+ registerButton: {
+  backgroundColor: COLORS.button_bg_color,
+  paddingVertical: wp(3),
+  borderRadius: wp(10),
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: hp(3),
+  width: "70%", // full width inside card
+  alignSelf: "center",
+},
+registerButtonText: {
+  color: "#fff",
+  fontWeight: "bold",
+  fontSize: 16,
+},
 });
 
 export default RegisterScreen;

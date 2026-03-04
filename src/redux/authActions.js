@@ -1096,7 +1096,7 @@ export const userAnswerCallApi = (payload, callback) => async (dispatch) => {
     callback(response);
     return response;
   } catch (error) {
-    console.log(error, "errorendCall")
+    console.log(error, "errorAnswerCall")
   }
 };
 
