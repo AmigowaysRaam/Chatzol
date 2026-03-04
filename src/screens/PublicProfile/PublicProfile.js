@@ -184,7 +184,7 @@ const PublicProfile = () => {
         {/* PROFILE INFO */}
         <View style={styles.profileContainer}>
           <Image
-            source={ userItem.image }
+            source={{ uri:userItem.image} }
             style={styles.profileImage}
           />
 

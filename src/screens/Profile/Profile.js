@@ -199,7 +199,7 @@ const Profile = () => {
             onPress={handleImagePicker}
           >
             <Image
-              source={ profileImage }
+              source={{ uri: profileImage} }
               style={styles.profileImage}
             />
             <Ionicons

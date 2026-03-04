@@ -97,14 +97,12 @@ const ProfileScreen = () => {
         <View style={styles.profileSection}>
           <View style={styles.avatarWrapper}>
             <Image
-              // source={{
-              //   uri:
-              //     profileImage ||
-              //     "https://i.imgur.com/6VBx3io.png",
-              // }}
-              source={
-                  profileImage 
-              }
+              source={{
+                uri:
+                  profileImage ||
+                  "https://i.imgur.com/6VBx3io.png",
+              }}
+              
               style={[styles.avatar,{borderColor:COLORS.button_bg_color}]}
             />
 

@@ -179,8 +179,7 @@ const UserStories = () => {
                             alignItems: "center",
                         }}>
                         <Image
-                     //    source={profile?.profilepicture ? { uri: profile?.profilepicture } : ""}
-                            source={ profile?.profilepicture}
+                         source={profile?.profilepicture ? { uri: profile?.profilepicture } : ""}
                             style={[styles.statusImage]}
                         />
                         <View style={{ position: 'relative', top: 18, right: 20, borderColor: COLORS.white, borderWidth: wp(0.3), backgroundColor: COLORS.black, borderRadius: wp(10) }}>

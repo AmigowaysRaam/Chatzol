@@ -449,8 +449,8 @@ const fnPinChat = () => {
       ]}>
 
         <Image
-        // source={item.avatar ? { uri: item.avatar } : require('../../assets/nodp.jpg')}
-          source={ item.avatar  }
+         source={item.avatar ? { uri: item.avatar } : require('../../assets/nodp.jpg')}
+         // source={ item.avatar  }
           style={styles.avatar}
         />
 
@@ -719,7 +719,7 @@ const HeaderComponent = (profile) => {
         
 
         <TouchableOpacity onPress={() => { handleNavigateProfileScreen() }}>
-          <Image source={profile?.profile?.profilepicture } style={{
+          <Image  source={profile?.profile?.profilepicture ? { uri: profile?.profile?.profilepicture } : ""} style={{
             width: wp(8),
             height: wp(8),
             borderRadius: wp(6),

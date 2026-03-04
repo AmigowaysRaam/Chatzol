@@ -159,7 +159,7 @@ const renderCommunity = (item, index) => {
         activeOpacity={0.8}
       >
         <Image
-          source={ item?.image }
+          source={{ uri : item?.image} }
           style={styles.communityAvatar}
         />
 
@@ -250,7 +250,7 @@ const renderCommunity = (item, index) => {
 
             <TouchableOpacity onPress={handlePickImage}>
               <Image
-                source={ newGroupImage }
+                source={ { uri: newGroupImage} }
                 style={styles.editAvatar}
               />
             </TouchableOpacity>

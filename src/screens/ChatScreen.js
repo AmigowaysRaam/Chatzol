@@ -1043,7 +1043,7 @@ const renderItem = useCallback(({ item }) => {
                 }}
               >
                 <Image
-                  source={userProfileImage }
+                  source={{ uri:userProfileImage }}
                   style={styles.profileImage}
                 />
                 <View style={styles.textContainer}>

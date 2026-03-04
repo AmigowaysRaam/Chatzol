@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Image, SafeAreaView, Text,  StatusBar,  Platform,  Linking,  BackHandler,  View, TouchableOpacity,  StyleSheet,} from 'react-native';
+import {
+  SafeAreaView,
+  Text,
+  StatusBar,
+  Platform,
+  Linking,
+  BackHandler,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
@@ -7,17 +17,27 @@ import { useFonts } from 'expo-font';
 import firebase from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Toast from 'react-native-toast-message';
 import InitialRouter from './src/navigations/initial-router';
-import { WallpaperProvider } from './src/context/WallpaperContext';   
+import { WallpaperProvider } from './src/context/WallpaperContext';
 import { COLORS } from './src/resources/Colors';
 import NetInfo from '@react-native-community/netinfo';
 import { hp, wp } from './src/resources/dimensions';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
 
+// Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp();
 }
+
+// Foreground notification behavior
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -27,92 +47,106 @@ export default function App() {
     Louis_George_Cafe_Light: require('./assets/fonts/Louis_George_Cafe_Light.ttf'),
   });
 
-  const [token, setToken] = useState('');
   const [network, setNetwork] = useState(true);
 
-  // ✅ Network Check (Full Screen Blocker)
+  //  Network Listener
   useEffect(() => {
-    const unsubscribeNetInfo = NetInfo.addEventListener(state => {
-      if (!state.isConnected || !state.isInternetReachable) {
-        setNetwork(false);
-      } else {
-        setNetwork(true);
-      }
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setNetwork(state.isConnected && state.isInternetReachable);
     });
-
-    return unsubscribeNetInfo;
+    return unsubscribe;
   }, []);
 
-  // ✅ Setup FCM
+  //   Request Notification Permission + Get FCM Token
   useEffect(() => {
-    const fetchFCMToken = async () => {
-      try {
-        const authStatus = await messaging().requestPermission();
-        const enabled =
-          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    const setupFCM = async () => {
+      const authStatus = await messaging().requestPermission();
 
-        if (enabled) {
-          console.log('Notification permission granted');
-        }
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-        const fcmToken = await messaging().getToken();
-        if (fcmToken) {
-          setToken(fcmToken);
-          await AsyncStorage.setItem('fcm_token', fcmToken);
-        }
-      } catch (error) {
-        console.error('FCM Error:', error);
+      if (enabled) {
+        console.log('✅ Notification permission granted');
+      } else {
+        console.log('❌ Notification permission denied');
+      }
+
+      const fcmToken = await messaging().getToken();
+      console.log('🔥 FCM TOKEN:', fcmToken);
+
+      if (fcmToken) {
+        await AsyncStorage.setItem('fcm_token', fcmToken);
       }
     };
 
-    fetchFCMToken();
+    setupFCM();
   }, []);
 
-  // ✅ Foreground Notifications
+  // 📩 Notification Listeners
   useEffect(() => {
+    // Foreground
     const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
-      Toast.show({
-        type: 'info',
-        position: 'top',
-        text1: remoteMessage.notification?.title || 'New Notification',
-        text2: remoteMessage.notification?.body || 'You have a new message!',
-        visibilityTime: 4000,
+      // console.log('📩 Foreground Message:', JSON.stringify(remoteMessage, null, 2));
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title:
+            remoteMessage.data?.title ||
+            remoteMessage.notification?.title ||
+            'New Message',
+          body:
+            remoteMessage.data?.body ||
+            remoteMessage.notification?.body ||
+            'You have a new message',
+          data: remoteMessage.data,
+          sound: true,
+        },
+        trigger: null,
       });
     });
 
-    messaging().onNotificationOpenedApp(remoteMessage => {
-      Toast.show({
-        type: 'info',
-        position: 'top',
-        text1: remoteMessage.notification?.title || 'New Notification',
-        text2: remoteMessage.notification?.body || 'You have a new message!',
-        visibilityTime: 4000,
-      });
-    });
+    // Background open
+    const unsubscribeOnOpen = messaging().onNotificationOpenedApp(
+      async remoteMessage => {
+        console.log(
+          '📲 Opened from background:',
+          JSON.stringify(remoteMessage, null, 2)
+        );
+      }
+    );
 
+    // Quit state open
     messaging()
       .getInitialNotification()
       .then(remoteMessage => {
         if (remoteMessage) {
-          Toast.show({
-            type: 'info',
-            position: 'top',
-            text1: remoteMessage.notification?.title || 'New Notification',
-            text2: remoteMessage.notification?.body || 'You have a new message!',
-            visibilityTime: 4000,
-          });
+          console.log(
+            '🚀 Opened from quit state:',
+            JSON.stringify(remoteMessage, null, 2)
+          );
         }
       });
 
     return () => {
       unsubscribeOnMessage();
+      unsubscribeOnOpen();
     };
   }, []);
 
-  if (!fontsLoaded) {
-    return <Text>Loading Fonts...</Text>;
-  }
+  //  Android Channel
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'Chat Messages',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+  }, []);
+
+  if (!fontsLoaded) return <Text>Loading Fonts...</Text>;
 
   return (
     <Provider store={store}>
@@ -121,14 +155,12 @@ export default function App() {
           <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
             <StatusBar backgroundColor={COLORS.next_bg_color} />
             <InitialRouter />
-            <Toast ref={(ref) => Toast.setRef(ref)} />
 
-            {/* ✅ FULL SCREEN NETWORK OVERLAY */}
             {!network && (
               <View style={styles.networkContainer}>
-                <StatusBar backgroundColor='#000' barStyle="light-content" />
-                <MaterialIcons name='wifi-off' size={wp(40)} color={"#ff0000"}/>
-           
+                <StatusBar backgroundColor="#000" barStyle="light-content" />
+                <MaterialIcons name="wifi-off" size={wp(40)} color="#ff0000" />
+
                 <Text style={styles.networkTitle}>
                   No Internet Connection
                 </Text>
@@ -139,13 +171,17 @@ export default function App() {
 
                 <TouchableOpacity
                   style={styles.settingsButton}
-                 onPress={() => {
-  if (Platform.OS === 'android') {
-    Linking.sendIntent('android.settings.DATA_ROAMING_SETTINGS');
-  } else {
-    Linking.openURL('App-Prefs:root=MOBILE_DATA_SETTINGS');
-  }
-}}
+                  onPress={() => {
+                    if (Platform.OS === 'android') {
+                      Linking.sendIntent(
+                        'android.settings.DATA_ROAMING_SETTINGS'
+                      );
+                    } else {
+                      Linking.openURL(
+                        'App-Prefs:root=MOBILE_DATA_SETTINGS'
+                      );
+                    }
+                  }}
                 >
                   <Text style={styles.settingsText}>Open Settings</Text>
                 </TouchableOpacity>
@@ -173,13 +209,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#000",
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: wp(6),
     zIndex: 9999,
   },
-
   networkTitle: {
     fontSize: wp(6),
     color: '#fff',
@@ -187,7 +222,6 @@ const styles = StyleSheet.create({
     marginTop: hp(3),
     marginBottom: hp(1.5),
   },
-
   networkSubtitle: {
     fontSize: wp(4),
     color: '#ccc',
@@ -195,7 +229,6 @@ const styles = StyleSheet.create({
     marginBottom: hp(4),
     paddingHorizontal: wp(5),
   },
-
   settingsButton: {
     backgroundColor: COLORS.button_bg_color,
     paddingVertical: hp(1.8),
@@ -203,13 +236,11 @@ const styles = StyleSheet.create({
     borderRadius: wp(3),
     marginBottom: hp(2.5),
   },
-
   settingsText: {
     color: '#fff',
     fontWeight: '600',
     fontSize: wp(4),
   },
-
   closeText: {
     color: '#ff4d4d',
     fontSize: wp(3.8),
