@@ -191,7 +191,7 @@ const Profile = () => {
       </LinearGradient>
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={{ alignSelf: "center" }}>
-          <Toast /> {/* Initialize Toast */}
+         {/* Initialize Toast */}
         </Text>
         <View style={styles.profileContainer}>
           <TouchableOpacity
@@ -282,6 +282,7 @@ const Profile = () => {
           </View>
         </View>
       </ScrollView>
+        <Toast />
     </KeyboardAvoidingView>
   );
 };

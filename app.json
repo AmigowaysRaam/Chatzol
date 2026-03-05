@@ -4,10 +4,10 @@
     "slug": "chatZol",
     "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/ic_launcher.png",
+    "icon": "./assets/ic_launcher.jpg",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/ic_launcher.png",
+      "image": "./assets/ic_launcher.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#058604"
     },
@@ -17,10 +17,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/ic_launcher.png",
+        "foregroundImage": "./assets/ic_launcher.jpg",
         "backgroundColor": "#058604"
       },
-      "package": "com.chatZol",
+      "package": "com.chatzol",
       "versionCode": 2 
     },
     "web": {
@@ -35,7 +35,7 @@
             "./assets/fonts/Louis_George_Cafe_Regular.ttf",
             "./assets/fonts/Louis_George_Cafe_Light.ttf",
             "./assets/fonts/Louis_George_Cafe.ttf",
-            "./assets/fonts/CooperBlack-Std.ttf"
+            "./assets/fonts/CooperBlack-Std.otf"
           ]
         }
       ]
