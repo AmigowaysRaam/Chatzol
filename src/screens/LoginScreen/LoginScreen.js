@@ -167,7 +167,7 @@ if (response) {
 
       <TextInputComponent
         style={[styles.input, { backgroundColor: COLORS.input_background }]}
-        title="Enter Username or Phone"
+        title="Enter Username"
         value={username}
         onChangeText={setUsername}
       />
