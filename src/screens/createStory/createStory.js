@@ -307,7 +307,7 @@ const CreateStory = () => {
 
 const styles = StyleSheet.create({
   topOverlay: { position: "absolute", top: hp(2), left: wp(3), right: wp(3), flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  captionContainer: { position: "absolute", bottom: hp(15), left: wp(4), right: wp(4) },
+  captionContainer: { position: "absolute", bottom: hp(10), left: wp(4), right: wp(4) },
   captionInput: { backgroundColor: "rgba(0,0,0,0.5)", color: "#fff", padding: hp(1.2), borderRadius: wp(8), fontSize: wp(4) },
   removeButton: { backgroundColor: "rgba(0,0,0,0.6)", padding: wp(2), borderRadius: wp(4) },
   galleryWrapper: { backgroundColor: "transparent", paddingVertical: hp(1), paddingLeft: wp(2),marginBottom:wp(10) },

@@ -14,6 +14,7 @@ import Contacts from "react-native-contacts";
 import { check, request, PERMISSIONS, RESULTS } from "react-native-permissions";
 import { hp, wp } from "../resources/dimensions";
 import { COLORS } from "../resources/Colors";
+import HeaderBar from "../ScreenComponents/HeaderComponent/HeaderComponent";
 
 const PhoneContactsScreen = () => {
   const [contacts, setContacts] = useState([]);
@@ -100,6 +101,7 @@ const PhoneContactsScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8F9FB" }}>
+      <HeaderBar title="Contacts" showBackArrow/>
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <TextInput

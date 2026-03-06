@@ -24,7 +24,7 @@ import messaging from '@react-native-firebase/messaging';
 import moment from "moment";
 import { AppState } from 'react-native';
 import Toast from "react-native-toast-message";
-import firestore from '@react-native-firebase/firestore';
+// import firestore from '@react-native-firebase/firestore';
 import InCallManager from 'react-native-incall-manager';
 
 
@@ -297,6 +297,7 @@ useFocusEffect(
     favourited: convo?.favourited,
     pinChart: convo?.pinned
   })) || [];
+ // console.log("Conversation List:", conversationList);
 
 //   const chats = conversationList?.map((convo, index) => ({
 //   id: index + 1,
@@ -329,51 +330,51 @@ useFocusEffect(
 
   const handledCallsRef = useRef(new Set());
 
-  useEffect(() => {
-    InCallManager.stopRingtone();
+  // useEffect(() => {
+  //   InCallManager.stopRingtone();
 
-    if (!profile?.username) return;
+  //   if (!profile?.username) return;
 
-    const unsubscribe = firestore()
-      .collection('calls')
-      .where('targetUserId', '==', profile.username)
-      .where('callEnded', '==', false)
-      .onSnapshot(snapshot => {
-        const now = Date.now();
+  //   const unsubscribe = firestore()
+  //     .collection('calls')
+  //     .where('targetUserId', '==', profile.username)
+  //     .where('callEnded', '==', false)
+  //     .onSnapshot(snapshot => {
+  //       const now = Date.now();
 
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const callId = doc.id;
-          // Prevent handling the same call more than once
-          if (handledCallsRef.current.has(callId)) return;
-          const callCreatedAt = data?.createdAt?.toMillis?.() || 0;
-          const isRecent = now - callCreatedAt < 15000; // only handle calls from last 15s
-          const isRinging = data?.status === 'ringing';
+  //       snapshot.forEach(doc => {
+  //         const data = doc.data();
+  //         const callId = doc.id;
+  //         // Prevent handling the same call more than once
+  //         if (handledCallsRef.current.has(callId)) return;
+  //         const callCreatedAt = data?.createdAt?.toMillis?.() || 0;
+  //         const isRecent = now - callCreatedAt < 15000; // only handle calls from last 15s
+  //         const isRinging = data?.status === 'ringing';
 
-          if (data?.offer && isRecent) {
-            handledCallsRef.current.add(callId);
+  //         if (data?.offer && isRecent) {
+  //           handledCallsRef.current.add(callId);
 
-            const callApiId = data.apiCallId;
-            const callerName = data?.callerName || 'Unknown Caller';
-            const callerPic = data?.callerPic || null;
+  //           const callApiId = data.apiCallId;
+  //           const callerName = data?.callerName || 'Unknown Caller';
+  //           const callerPic = data?.callerPic || null;
 
-            InCallManager.startRingtone();
+  //           InCallManager.startRingtone();
 
-            navigation.navigate('AnswerCallScreen', {
-              callId,
-              callApiId,
-              profileName: callerName,
-              callerPic
-            });
-          }
-        });
-      });
+  //           navigation.navigate('AnswerCallScreen', {
+  //             callId,
+  //             callApiId,
+  //             profileName: callerName,
+  //             callerPic
+  //           });
+  //         }
+  //       });
+  //     });
 
-    return () => {
-      InCallManager.stopRingtone();
-      unsubscribe();
-    };
-  }, [profile?.username, navigation]);
+  //   return () => {
+  //     InCallManager.stopRingtone();
+  //     unsubscribe();
+  //   };
+  // }, [profile?.username, navigation]);
 
  const fnHandleMuteConvo = () => {
   selectedChats.forEach((item) => {
@@ -485,8 +486,35 @@ const fnPinChat = () => {
           ]}>
             {item?.lastmessagetimestamp}
           </Text>
+        <View style={{ flexDirection: "row", marginTop: 4 }}>          
 
-          {item.unreadcount > 0 && (
+  {item.muted == 1 && (
+    <Icon
+      name="volume-mute"
+      size={18}
+      color={COLORS.button_bg_color}
+      style={{ marginHorizontal: 4 }}
+    />
+  )}
+
+  {item.pinChart == 1 && (
+    <MaterialCommunityIcons
+      name="pin"
+      size={18}
+       color={COLORS.button_bg_color}
+      style={{ marginHorizontal: 4 }}
+    />
+  )}
+  {item.favourited == 1 && (
+    <MaterialCommunityIcons
+    name="heart"
+    size={18}
+    color={COLORS.button_bg_color}
+    style={{ marginHorizontal: 4 }}
+    />
+  )
+  }
+   {item.unreadcount > 0 && (
             <View style={[
               styles.circle,
               { backgroundColor: COLORS.button_bg_color }
@@ -496,28 +524,10 @@ const fnPinChat = () => {
               </Text>
             </View>
           )}
-        </View>
-        <View style={{ flexDirection: "row", marginTop: 4 }}>
-
-  {item.muted == 1 && (
-    <Icon
-      name="volume-mute"
-      size={16}
-      color="gray"
-      style={{ marginHorizontal: 4 }}
-    />
-  )}
-
-  {item.pinChart == 1 && (
-    <MaterialCommunityIcons
-      name="pin"
-      size={16}
-      color="gray"
-      style={{ marginHorizontal: 4 }}
-    />
-  )}
 
 </View>
+        </View>
+    
 
 
       </View>
@@ -824,7 +834,7 @@ const styles = StyleSheet.create({
     width: wp(5),
     height: wp(5),
     borderRadius: wp(2.5),
-    marginHorizontal: wp(4),
+    marginHorizontal: wp(2),
     justifyContent: "center",
     alignItems: "center",
   },

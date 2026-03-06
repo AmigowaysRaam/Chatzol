@@ -86,13 +86,13 @@ const RegisterScreen = () => {
       isValid = false;
     }
 
-    if (!email.trim()) {
-      errorsTemp.email = "Email is required";
-      isValid = false;
-    } else if (!regEmail.test(email)) {
-      errorsTemp.email = "Invalid email format";
-      isValid = false;
-    }
+    // if (!email.trim()) {
+    //   errorsTemp.email = "Email is required";
+    //   isValid = false;
+    // } else if (!regEmail.test(email)) {
+    //   errorsTemp.email = "Invalid email format";
+    //   isValid = false;
+    // }
 
     if (!phonenumber.trim()) {
       errorsTemp.phonenumber = "Phone number is required";
@@ -177,7 +177,7 @@ const RegisterScreen = () => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Toast />
+       
 
         {/* Header */}
         <View style={styles.topSection}>
@@ -234,7 +234,7 @@ const RegisterScreen = () => {
           ) : null}
 
           <TextInputComponent
-            title="Email"
+            title="Email   (optional)"
             keyboardType="email-address"
             value={email}
             onChangeText={(text) => {
@@ -375,6 +375,7 @@ const RegisterScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+       <Toast />
     </SafeAreaView>
   );
 };

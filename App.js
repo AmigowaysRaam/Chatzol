@@ -14,8 +14,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import store from './src/redux/store';
 import { useFonts } from 'expo-font';
-import firebase from '@react-native-firebase/app';
-import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import InitialRouter from './src/navigations/initial-router';
 import { WallpaperProvider } from './src/context/WallpaperContext';
@@ -24,11 +22,12 @@ import NetInfo from '@react-native-community/netinfo';
 import { hp, wp } from './src/resources/dimensions';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+// import firebase from '@react-native-firebase/app';
 
-// Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp();
-}
+// // Initialize Firebase
+// if (!firebase.apps.length) {
+//   firebase.initializeApp();
+// }
 
 // Foreground notification behavior
 Notifications.setNotificationHandler({
@@ -57,82 +56,82 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  //   Request Notification Permission + Get FCM Token
-  useEffect(() => {
-    const setupFCM = async () => {
-      const authStatus = await messaging().requestPermission();
+  // //   Request Notification Permission + Get FCM Token
+  // useEffect(() => {
+  //   const setupFCM = async () => {
+  //     const authStatus = await messaging().requestPermission();
 
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  //     const enabled =
+  //       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+  //       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-      if (enabled) {
-        console.log('✅ Notification permission granted');
-      } else {
-        console.log('❌ Notification permission denied');
-      }
+  //     if (enabled) {
+  //       console.log('✅ Notification permission granted');
+  //     } else {
+  //       console.log('❌ Notification permission denied');
+  //     }
 
-      const fcmToken = await messaging().getToken();
-      console.log('🔥 FCM TOKEN:', fcmToken);
+  //     const fcmToken = await messaging().getToken();
+  //     console.log('🔥 FCM TOKEN:', fcmToken);
 
-      if (fcmToken) {
-        await AsyncStorage.setItem('fcm_token', fcmToken);
-      }
-    };
+  //     if (fcmToken) {
+  //       await AsyncStorage.setItem('fcm_token', fcmToken);
+  //     }
+  //   };
 
-    setupFCM();
-  }, []);
+  //   setupFCM();
+  // }, []);
 
   // 📩 Notification Listeners
-  useEffect(() => {
-    // Foreground
-    const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
-      // console.log('📩 Foreground Message:', JSON.stringify(remoteMessage, null, 2));
+  // useEffect(() => {
+  //   // Foreground
+  //   const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
+  //     // console.log('📩 Foreground Message:', JSON.stringify(remoteMessage, null, 2));
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title:
-            remoteMessage.data?.title ||
-            remoteMessage.notification?.title ||
-            'New Message',
-          body:
-            remoteMessage.data?.body ||
-            remoteMessage.notification?.body ||
-            'You have a new message',
-          data: remoteMessage.data,
-          sound: true,
-        },
-        trigger: null,
-      });
-    });
+  //     await Notifications.scheduleNotificationAsync({
+  //       content: {
+  //         title:
+  //           remoteMessage.data?.title ||
+  //           remoteMessage.notification?.title ||
+  //           'New Message',
+  //         body:
+  //           remoteMessage.data?.body ||
+  //           remoteMessage.notification?.body ||
+  //           'You have a new message',
+  //         data: remoteMessage.data,
+  //         sound: true,
+  //       },
+  //       trigger: null,
+  //     });
+  //   });
 
-    // Background open
-    const unsubscribeOnOpen = messaging().onNotificationOpenedApp(
-      async remoteMessage => {
-        console.log(
-          '📲 Opened from background:',
-          JSON.stringify(remoteMessage, null, 2)
-        );
-      }
-    );
+  //   // Background open
+  //   const unsubscribeOnOpen = messaging().onNotificationOpenedApp(
+  //     async remoteMessage => {
+  //       console.log(
+  //         '📲 Opened from background:',
+  //         JSON.stringify(remoteMessage, null, 2)
+  //       );
+  //     }
+  //   );
 
-    // Quit state open
-    messaging()
-      .getInitialNotification()
-      .then(remoteMessage => {
-        if (remoteMessage) {
-          console.log(
-            '🚀 Opened from quit state:',
-            JSON.stringify(remoteMessage, null, 2)
-          );
-        }
-      });
+  //   // Quit state open
+  //   messaging()
+  //     .getInitialNotification()
+  //     .then(remoteMessage => {
+  //       if (remoteMessage) {
+  //         console.log(
+  //           '🚀 Opened from quit state:',
+  //           JSON.stringify(remoteMessage, null, 2)
+  //         );
+  //       }
+  //     });
 
-    return () => {
-      unsubscribeOnMessage();
-      unsubscribeOnOpen();
-    };
-  }, []);
+  //   return () => {
+  //     unsubscribeOnMessage();
+  //     unsubscribeOnOpen();
+  //   };
+  // }, []);
 
   //  Android Channel
   useEffect(() => {

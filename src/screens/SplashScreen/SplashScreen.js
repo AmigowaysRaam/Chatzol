@@ -1,5 +1,12 @@
-import React, { useEffect } from "react";
-import { View, StyleSheet, Alert, Linking, Platform } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Linking,
+  Modal,
+  Text,
+  TouchableOpacity,Platform
+} from "react-native";
 import LottieView from "lottie-react-native";
 import VersionCheck from "react-native-version-check";
 import { wp, hp } from "../../resources/dimensions";
@@ -13,37 +20,46 @@ const Splash = () => {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
+  const [updateRequired, setUpdateRequired] = useState(false);
+  const [storeUrl, setStoreUrl] = useState(null);
+
+  // Assign stored user data to redux
   const fnAssignUserData = async () => {
     const userData = await AsyncStorage.getItem("user_data");
     const obj = JSON.parse(userData);
-    // Alert.alert("", JSON.stringify(obj))
     if (obj) {
       dispatch({ type: "UPDATE_PROFILE_USER_SUCCESS", payload: obj });
       dispatch({ type: "LOGIN_USER_SUCCESS", payload: obj });
     }
   };
 
- const navigateAfterCheck = async () => {
-  const userData = await getUserData(); // returns user_data from AsyncStorage
+  // Navigate after checks
+const navigateAfterCheck = async () => {
+  const userData = await getUserData();
   const fingerprintEnabled = await AsyncStorage.getItem("fingerprintEnabled");
 
   if (userData || isAuthenticated) {
+    // Skip biometric for iOS
+    if (Platform.OS === "ios") {
+      navigation.replace("HomeScreen");
+      return;
+    }
+
     if (fingerprintEnabled === "true") {
-      navigation.replace("BiometricScreen"); // ask fingerprint first
+      navigation.replace("BiometricScreen");
     } else {
-      navigation.replace("HomeScreen"); // go home if fingerprint disabled
+      navigation.replace("HomeScreen");
     }
   } else {
-    navigation.replace("LoginScreen"); // first-time login
+    navigation.replace("LoginScreen");
   }
 };
 
+  // Version check logic
   const checkVersion = async () => {
     try {
       const latestVersion = await VersionCheck.getLatestVersion();
       const currentVersion = VersionCheck.getCurrentVersion();
-      console.log("Latest Version:", latestVersion);
-      console.log("Current Version:", currentVersion);
 
       const updateNeeded = await VersionCheck.needUpdate({
         currentVersion,
@@ -51,44 +67,15 @@ const Splash = () => {
       });
 
       if (updateNeeded?.isNeeded) {
-        Alert.alert(
-          "Update Required",
-          "A new version of the app is available. Please update to continue.",
-          [
-            {
-              text: "Update Now",
-              onPress: async () => {
-                try {
-                  const storeUrl = await VersionCheck.getStoreUrl();
-                  if (storeUrl && typeof storeUrl === "string") {
-                    const supported = await Linking.canOpenURL(storeUrl);
-                    if (supported) {
-                      await Linking.openURL(storeUrl);
-                    } else {
-                      Alert.alert("Error", "Unable to open the store URL.");
-                    }
-                  } else {
-                    Alert.alert("Error", "Store URL is invalid or not available.");
-                  }
-                } catch (error) {
-                  console.error("Error opening store URL:", error);
-                  Alert.alert(
-                    "Error",
-                    "An error occurred while trying to open the app store."
-                  );
-                }
-              },
-            },
-          ],
-          { cancelable: false }
-        );
+        const url = await VersionCheck.getStoreUrl();
+        setStoreUrl(url);
+        setUpdateRequired(true); // Show modal
       } else {
-        console.log("App is up to date.");
-        navigateAfterCheck(); // Navigate only if app is up to date
+        navigateAfterCheck();
       }
     } catch (error) {
-      console.error("Error checking version:", error);
-      navigateAfterCheck(); // Navigate if version check fails (optional fallback)
+      console.log("Version check failed:", error);
+      navigateAfterCheck(); // fallback if version check fails
     }
   };
 
@@ -101,6 +88,15 @@ const Splash = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleUpdatePress = async () => {
+    if (!storeUrl) return;
+
+    const supported = await Linking.canOpenURL(storeUrl);
+    if (supported) {
+      await Linking.openURL(storeUrl);
+    }
+  };
+
   return (
     <View style={styles.splashContainer}>
       <LottieView
@@ -109,6 +105,25 @@ const Splash = () => {
         autoPlay
         loop={false}
       />
+
+      {/* Update Modal */}
+      <Modal visible={updateRequired} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Update Required</Text>
+            <Text style={styles.modalMessage}>
+              A new version of the app is available. Please update to continue.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.updateButton}
+              onPress={handleUpdatePress}
+            >
+              <Text style={styles.updateButtonText}>Update Now</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -120,6 +135,50 @@ const styles = StyleSheet.create({
     width: wp(100),
     alignItems: "center",
     backgroundColor: "#ebecf1",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalContainer: {
+    width: wp(85),
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 25,
+    alignItems: "center",
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#000",
+  },
+
+  modalMessage: {
+    textAlign: "center",
+    color: "#555",
+    marginBottom: 25,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+
+  updateButton: {
+    backgroundColor: "#4A90E2",
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+  },
+
+  updateButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
 

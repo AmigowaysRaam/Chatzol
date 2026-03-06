@@ -1,5 +1,16 @@
+
 import React, { useEffect, useState, useCallback } from "react";
-import { View,  Text,  Image,  StyleSheet,  TouchableOpacity,  SafeAreaView,  StatusBar,  ScrollView, Alert,} from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  ScrollView,
+  Modal,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Divider } from "react-native-paper";
@@ -19,11 +30,9 @@ const ProfileScreen = () => {
   const userId = useSelector((state) => state.auth.user?._id);
   const profile = useSelector((state) => state.auth.profile);
 
-  const [profileImage, setProfileImage] = useState(
-    profile?.profilepicture
-  );
+  const [profileImage, setProfileImage] = useState(profile?.profilepicture);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
-  // Refresh profile when screen focuses
   useFocusEffect(
     useCallback(() => {
       if (userId) {
@@ -39,28 +48,13 @@ const ProfileScreen = () => {
   const handlelogout = async () => {
     dispatch(logout());
     await AsyncStorage.clear();
+    setLogoutModalVisible(false);
     navigation.replace("LoginScreen");
   };
 
-  const handleLogout = async ()=> {
-        Alert.alert(
-          "Are you sure?",
-          "Do you want to Logout?",
-          [
-            {
-              text: "No", // No button
-              onPress: () => console.log("Cancel Pressed"),
-              style: "cancel",
-            },
-            
-            {
-              text: "Yes", // Yes button
-              onPress: () => handlelogout(),
-            },
-          ],
-          { cancelable: false } // Prevent closing the alert by clicking outside
-        );
-  }
+  const handleLogout = () => {
+    setLogoutModalVisible(true);
+  };
 
   const menuItem = (icon, title, onPress) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress}>
@@ -72,18 +66,13 @@ const ProfileScreen = () => {
     </TouchableOpacity>
   );
 
-
-
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar barStyle="light-content" />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* HEADER */}
-        <LinearGradient
-          colors={["#F0F0F0", "#FFF"]}
-          style={styles.header}
-        >
+        <LinearGradient colors={["#F0F0F0", "#FFF"]} style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={26} color="#000" />
           </TouchableOpacity>
@@ -93,21 +82,21 @@ const ProfileScreen = () => {
           <View style={{ width: 26 }} />
         </LinearGradient>
 
-        {/* PROFILE SECTION */}
+        {/* PROFILE */}
         <View style={styles.profileSection}>
           <View style={styles.avatarWrapper}>
             <Image
               source={{
-                uri:
-                  profileImage ||
-                  "https://i.imgur.com/6VBx3io.png",
+                uri: profileImage || "https://i.imgur.com/6VBx3io.png",
               }}
-              
-              style={[styles.avatar,{borderColor:COLORS.button_bg_color}]}
+              style={[styles.avatar, { borderColor: COLORS.button_bg_color }]}
             />
 
             <TouchableOpacity
-              style={[styles.editIcon,{backgroundColor: COLORS.button_bg_color}]}
+              style={[
+                styles.editIcon,
+                { backgroundColor: COLORS.button_bg_color },
+              ]}
               onPress={() => navigation.navigate("Profile")}
             >
               <Ionicons name="pencil" size={18} color="#fff" />
@@ -138,6 +127,7 @@ const ProfileScreen = () => {
           {menuItem("alert-circle-outline", "Blocked Users", () =>
             navigation.navigate("BlcokedUserList")
           )}
+
           {menuItem("trash-outline", "Delete Account", () =>
             navigation.navigate("DeleteAccount")
           )}
@@ -145,15 +135,66 @@ const ProfileScreen = () => {
 
         {/* LOGOUT BUTTON */}
         <TouchableOpacity
-          style={[styles.logoutBtn,{backgroundColor:COLORS.black,flexDirection:'row',justifyContent:"center"}]}
+          style={[
+            styles.logoutBtn,
+            {
+              backgroundColor: COLORS.black,
+              flexDirection: "row",
+              justifyContent: "center",
+            },
+          ]}
           onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={22} color="#243B55" />
-          <Text style={[styles.logoutText, Louis_George_Cafe.bold.h6,{marginLeft:wp(2)}]}>
+          <Text
+            style={[
+              styles.logoutText,
+              Louis_George_Cafe.bold.h6,
+              { marginLeft: wp(2) },
+            ]}
+          >
             Logout
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* LOGOUT MODAL */}
+      <Modal transparent visible={logoutModalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Ionicons
+              name="log-out-outline"
+              size={40}
+              color={COLORS.button_bg_color}
+            />
+
+            <Text style={[styles.modalTitle, Louis_George_Cafe.bold.h5]}>
+              Logout
+            </Text>
+
+            <Text style={[styles.modalMessage, Louis_George_Cafe.regular.h7]}>
+              Are you sure you want to logout?
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setLogoutModalVisible(false)}
+              >
+                <Text style={[styles.cancelText, Louis_George_Cafe.bold.h7]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.confirmBtn} onPress={handlelogout}>
+                <Text style={[styles.confirmText, Louis_George_Cafe.bold.h7]}>
+                  Yes Logout
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -247,7 +288,6 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 40,
     marginHorizontal: 60,
-  
     padding: 14,
     borderRadius: 30,
     alignItems: "center",
@@ -257,4 +297,61 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
   },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalContainer: {
+    width: wp(80),
+    backgroundColor: "#fff",
+    borderRadius: wp(4),
+    paddingVertical: hp(3),
+    paddingHorizontal: wp(6),
+    alignItems: "center",
+  },
+
+  modalTitle: {
+    marginTop: hp(1),
+    fontSize: wp(5),
+    color: "#222",
+  },
+
+  modalMessage: {
+    marginTop: hp(1),
+    textAlign: "center",
+    color: "#666",
+  },
+
+  modalButtons: {
+    flexDirection: "row",
+    marginTop: hp(3),
+  },
+
+  cancelBtn: {
+    backgroundColor: "#E5E5E5",
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(6),
+    borderRadius: wp(6),
+    marginRight: wp(3),
+  },
+
+  confirmBtn: {
+    backgroundColor: COLORS.button_bg_color,
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(6),
+    borderRadius: wp(6),
+  },
+
+  cancelText: {
+    color: "#333",
+  },
+
+  confirmText: {
+    color: "#fff",
+  },
 });
+

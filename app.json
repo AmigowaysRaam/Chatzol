@@ -4,21 +4,16 @@
     "slug": "chatZol",
     "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/ic_launcher.png",
+    "icon": "./assets/ic_launcher.jpg",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/ic_launcher.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#058604"
-    },
     "ios": {
       "supportsTablet": true,
       "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/ic_launcher.png",
-        "backgroundColor": "#058604"
+        "foregroundImage": "./assets/ic_launcher.jpg"
+        
       },
       "package": "com.chatZol",
       "versionCode": 2 
@@ -35,7 +30,7 @@
             "./assets/fonts/Louis_George_Cafe_Regular.ttf",
             "./assets/fonts/Louis_George_Cafe_Light.ttf",
             "./assets/fonts/Louis_George_Cafe.ttf",
-            "./assets/fonts/CooperBlack-Std.ttf"
+            "./assets/fonts/CooperBlack-Std.otf"
           ]
         }
       ]

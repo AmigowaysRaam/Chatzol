@@ -111,22 +111,21 @@ const CallHistory = () => {
                             Loading call history...
                         </Text>
                     </View>
-                ) : (
+                ) : calls  ? (
                     <FlatList
                         data={calls}
                         keyExtractor={(item) => item.id}
                         renderItem={renderCallItem}
                         contentContainerStyle={styles.listContainer}
-                        ListEmptyComponent={() => (
-                            <View style={styles.emptyContainer}>
+                    
+                    />
+                ) : (
+                     <View style={styles.emptyContainer}>
                                 <Text style={[Louis_George_Cafe.bold.h4, { color: COLORS.white }]}>
                                     No Call History
                                 </Text>
                             </View>
-                        )}
-                    />
-                )
-            }
+                )}
         </SafeAreaView>
     );
 };

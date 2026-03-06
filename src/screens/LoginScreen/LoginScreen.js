@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Image, Text, TouchableOpacity, StyleSheet, Alert, BackHandler } from "react-native";
+import { View, Image, Text, TouchableOpacity, StyleSheet, Alert, BackHandler,Keyboard,TouchableWithoutFeedback } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -148,8 +148,9 @@ if (response) {
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <View style={styles.container}>
-      <Toast />
+     
       <View >
         <Image
           resizeMode="contain"
@@ -167,7 +168,7 @@ if (response) {
 
       <TextInputComponent
         style={[styles.input, { backgroundColor: COLORS.input_background }]}
-        title="Enter Username or Phone"
+        title="Enter Username"
         value={username}
         onChangeText={setUsername}
       />
@@ -215,7 +216,9 @@ if (response) {
           Don't have an account? Register
         </Text>
       </TouchableOpacity>
+     <Toast />
     </View>
+    </TouchableWithoutFeedback>
   );
 };
 
