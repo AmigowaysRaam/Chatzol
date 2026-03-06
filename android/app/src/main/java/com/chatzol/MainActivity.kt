@@ -1,4 +1,4 @@
-package com.chatzol
+package com.chatZol
 
 import android.os.Build
 import android.os.Bundle

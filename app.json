@@ -6,21 +6,16 @@
     "orientation": "portrait",
     "icon": "./assets/ic_launcher.jpg",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/ic_launcher.jpg",
-      "resizeMode": "contain",
-      "backgroundColor": "#058604"
-    },
     "ios": {
       "supportsTablet": true,
       "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/ic_launcher.jpg",
-        "backgroundColor": "#058604"
+        "foregroundImage": "./assets/ic_launcher.jpg"
+        
       },
-      "package": "com.chatzol",
+      "package": "com.chatZol",
       "versionCode": 2 
     },
     "web": {

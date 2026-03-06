@@ -22,6 +22,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { hp, wp } from './src/resources/dimensions';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+// import firebase from '@react-native-firebase/app';
 
 // // Initialize Firebase
 // if (!firebase.apps.length) {

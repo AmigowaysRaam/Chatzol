@@ -24,7 +24,7 @@ import messaging from '@react-native-firebase/messaging';
 import moment from "moment";
 import { AppState } from 'react-native';
 import Toast from "react-native-toast-message";
-import firestore from '@react-native-firebase/firestore';
+// import firestore from '@react-native-firebase/firestore';
 import InCallManager from 'react-native-incall-manager';
 
 
@@ -330,51 +330,51 @@ useFocusEffect(
 
   const handledCallsRef = useRef(new Set());
 
-  useEffect(() => {
-    InCallManager.stopRingtone();
+  // useEffect(() => {
+  //   InCallManager.stopRingtone();
 
-    if (!profile?.username) return;
+  //   if (!profile?.username) return;
 
-    const unsubscribe = firestore()
-      .collection('calls')
-      .where('targetUserId', '==', profile.username)
-      .where('callEnded', '==', false)
-      .onSnapshot(snapshot => {
-        const now = Date.now();
+  //   const unsubscribe = firestore()
+  //     .collection('calls')
+  //     .where('targetUserId', '==', profile.username)
+  //     .where('callEnded', '==', false)
+  //     .onSnapshot(snapshot => {
+  //       const now = Date.now();
 
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const callId = doc.id;
-          // Prevent handling the same call more than once
-          if (handledCallsRef.current.has(callId)) return;
-          const callCreatedAt = data?.createdAt?.toMillis?.() || 0;
-          const isRecent = now - callCreatedAt < 15000; // only handle calls from last 15s
-          const isRinging = data?.status === 'ringing';
+  //       snapshot.forEach(doc => {
+  //         const data = doc.data();
+  //         const callId = doc.id;
+  //         // Prevent handling the same call more than once
+  //         if (handledCallsRef.current.has(callId)) return;
+  //         const callCreatedAt = data?.createdAt?.toMillis?.() || 0;
+  //         const isRecent = now - callCreatedAt < 15000; // only handle calls from last 15s
+  //         const isRinging = data?.status === 'ringing';
 
-          if (data?.offer && isRecent) {
-            handledCallsRef.current.add(callId);
+  //         if (data?.offer && isRecent) {
+  //           handledCallsRef.current.add(callId);
 
-            const callApiId = data.apiCallId;
-            const callerName = data?.callerName || 'Unknown Caller';
-            const callerPic = data?.callerPic || null;
+  //           const callApiId = data.apiCallId;
+  //           const callerName = data?.callerName || 'Unknown Caller';
+  //           const callerPic = data?.callerPic || null;
 
-            InCallManager.startRingtone();
+  //           InCallManager.startRingtone();
 
-            navigation.navigate('AnswerCallScreen', {
-              callId,
-              callApiId,
-              profileName: callerName,
-              callerPic
-            });
-          }
-        });
-      });
+  //           navigation.navigate('AnswerCallScreen', {
+  //             callId,
+  //             callApiId,
+  //             profileName: callerName,
+  //             callerPic
+  //           });
+  //         }
+  //       });
+  //     });
 
-    return () => {
-      InCallManager.stopRingtone();
-      unsubscribe();
-    };
-  }, [profile?.username, navigation]);
+  //   return () => {
+  //     InCallManager.stopRingtone();
+  //     unsubscribe();
+  //   };
+  // }, [profile?.username, navigation]);
 
  const fnHandleMuteConvo = () => {
   selectedChats.forEach((item) => {

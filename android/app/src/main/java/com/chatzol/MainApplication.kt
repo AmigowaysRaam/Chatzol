@@ -1,4 +1,4 @@
-package com.chatzol
+package com.chatZol
 
 import android.app.Application
 import android.content.res.Configuration

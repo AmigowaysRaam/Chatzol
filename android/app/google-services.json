@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "797110344217",
+    "project_id": "chatzol",
+    "storage_bucket": "chatzol.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:797110344217:android:88deb0eeb8c743a913e888",
+        "android_client_info": {
+          "package_name": "com.chatZol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbUU6MFlCnz6pZOYBzKNBDw6w0UdeCvdU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
