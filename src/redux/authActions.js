@@ -261,18 +261,70 @@ import {
 } from "./actionsTypes";
 import { API_REQUESTS } from "../api/api-end-points";
 import { current } from "@reduxjs/toolkit";
+import NetInfo from "@react-native-community/netinfo";
+import { navigate } from "../navigations/NavigationRef"
 
 // Utility function for async requests
-const sendRequest = async (requestConfig, data = {}, headers = {}) => {
-  // console.log("sendRequestAsyng", requestConfig, data);
-  const { url, method } = requestConfig;
-  const response = await axios({
-    url,
-    method,
-    data,
-    headers,
+let isNavigating = false;
+
+const handleServerDown = () => {
+  if (isNavigating) return;
+
+  isNavigating = true;
+  navigate("ServerDown");
+
+  setTimeout(() => {
+    isNavigating = false;
+  }, 3000);
+};
+
+export const sendRequest = async (requestConfig, data = {}, headers = {}) => {
+  console.log("⚡ sendRequest called with URL:", requestConfig.url);
+  const { url, method = "POST" } = requestConfig;
+
+  try {
+    const net = await NetInfo.fetch();
+
+    // ❌ No Internet
+    if (!net.isConnected) {
+      throw new Error("No Internet");
+    }
+
+    const response = await axios({
+      url,
+      method,
+      data,
+      headers,
+      timeout: 10000,
+    });
+
+    return response.data;
+
+  } catch (error) {
+    const net = await NetInfo.fetch();
+      console.log("🔴 API Error caught:", {
+    isConnected: net.isConnected,
+    errorCode: error.code,
+    responseStatus: error.response?.status,
+    errorMessage: error.message
   });
-  return response.data;
+
+    // 🚨 SERVER DOWN
+    if (
+      net.isConnected &&
+      (
+        error.code === "ECONNABORTED" || // timeout
+        !error.response ||               // no response
+        error.response?.status >= 500    // server error
+      )
+    ) {
+      console.log("🚨 Server Down Detected");
+      handleServerDown();
+    }
+
+    // ❗ IMPORTANT: always throw
+    throw error;
+  }
 };
 
 // Action Creators

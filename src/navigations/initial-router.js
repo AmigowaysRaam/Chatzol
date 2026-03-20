@@ -1,5 +1,4 @@
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "../screens/LoginScreen/LoginScreen";
 import SignIn from "../screens/SignIn/SignIn";
@@ -47,13 +46,14 @@ import BiometricScreen from "../screens/BiometricScreen";
 import StarredMessagesScreen from "../screens/StaredMessages/StaredMessages";
 import PhoneContactsScreen from "../screens/PhoneContactsScreen";
 import DeleteAccountScreen from "../screens/DeleteAccount";
+import ServerDown from "../screens/ServerDownScreen";
 
 
 const Stack = createNativeStackNavigator();
 
 function InitialRouter() {
   return (
-    <NavigationContainer>
+   
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
         initialRouteName="Splash"
@@ -108,6 +108,7 @@ function InitialRouter() {
         <Stack.Screen name='BiometricScreen' component={BiometricScreen} />
         <Stack.Screen name='PhoneContacts' component={PhoneContactsScreen}/>
         <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen}/>
+        <Stack.Screen name='ServerDown' component={ServerDown}/>
         <Stack.Screen
           name="StoryPreviewScreen"
           component={StoryPreviewScreen}
@@ -155,7 +156,6 @@ function InitialRouter() {
 
 
       </Stack.Navigator>
-    </NavigationContainer>
   );
 }
 

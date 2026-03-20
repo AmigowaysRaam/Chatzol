@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import {  View,  Text,  StyleSheet,  TouchableOpacity,  SafeAreaView,  Image,  TextInput,  StatusBar,  FlatList,  Platform,
+import {  View,  Text,  StyleSheet,  TouchableOpacity,  Image,  TextInput,  StatusBar,  FlatList,  Platform,
   PermissionsAndroid,
   ActivityIndicator,
-  ScrollView,Alert
+  ScrollView,Alert,SafeAreaView
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -100,6 +100,8 @@ const CreateStory = () => {
           path: response.assets[0].uri,
           width: 900,
           height: 1200,
+           hideBottomControls: true, // hides buttons on Android
+      cropperToolbarTitle: '',   // blank title
         });
         setImageUri(image.path);
         loadAlbumImages(selectedAlbum);

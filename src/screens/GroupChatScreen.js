@@ -29,14 +29,13 @@ import { Louis_George_Cafe } from "../resources/fonts";
 import { useFocusEffect } from '@react-navigation/native';  // Import useFocusEffect
 import { COLORS } from "../resources/Colors";
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFS from 'react-native-fs';
 import LottieView from "lottie-react-native";
 import Toast from "react-native-toast-message";
 import ImageCropPicker from "react-native-image-crop-picker";
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 
-const audioRecorderPlayer = new AudioRecorderPlayer();
+// const audioRecorderPlayer = new AudioRecorderPlayer();
 
 
 const GroupChatScreen = () => {
@@ -573,49 +572,49 @@ const handleReaction = (emoji) => {
   };
 
   // Start Recording
-  const startRecording = async () => {
-    if (!isRecording) {
+  // const startRecording = async () => {
+  //   if (!isRecording) {
 
-      const path = `${RNFS.DocumentDirectoryPath}/hello_${new Date().getTime()}.mp4`; // Unique filename based on timestamp
+  //     const path = `${RNFS.DocumentDirectoryPath}/hello_${new Date().getTime()}.mp4`; // Unique filename based on timestamp
 
-      try {
-        await audioRecorderPlayer.startRecorder(path);
-        audioRecorderPlayer.addRecordBackListener((e) => {
-          setRecordingTime(audioRecorderPlayer.mmssss(e.current_position));
-        });
+  //     try {
+  //       await audioRecorderPlayer.startRecorder(path);
+  //       audioRecorderPlayer.addRecordBackListener((e) => {
+  //         setRecordingTime(audioRecorderPlayer.mmssss(e.current_position));
+  //       });
 
-        setIsRecording(true);
-        setAudioFile(path); // Store the path of the audio file
-      } catch (error) {
-        console.error("Error starting recorder: ", error);
-        Alert.alert('Error', JSON.stringify(error));
-      }
-    }
-    else {
-      stopRecording();
-    }
-  };
+  //       setIsRecording(true);
+  //       setAudioFile(path); // Store the path of the audio file
+  //     } catch (error) {
+  //       console.error("Error starting recorder: ", error);
+  //       Alert.alert('Error', JSON.stringify(error));
+  //     }
+  //   }
+  //   else {
+  //     stopRecording();
+  //   }
+  // };
 
   // Stop Recording
-  const stopRecording = async () => {
-    if (isRecording) {
-      try {
-        await audioRecorderPlayer.stopRecorder();
-        audioRecorderPlayer.removeRecordBackListener();
-        setIsRecording(false);
-        // Store the audio file path in your stored files list for later access
-        setStoredAudioFiles((prevFiles) => [...prevFiles, audioFile]);
-        Alert.alert('Recording Stopped', `Audio file saved at ${audioFile}`);
-      } catch (error) {
-        console.error("Error stopping recorder: ", error);
-        Alert.alert('Error', 'Failed to stop recording');
-      }
-    }
-    else {
-      startRecording();
-    }
+  // const stopRecording = async () => {
+  //   if (isRecording) {
+  //     try {
+  //       await audioRecorderPlayer.stopRecorder();
+  //       audioRecorderPlayer.removeRecordBackListener();
+  //       setIsRecording(false);
+  //       // Store the audio file path in your stored files list for later access
+  //       setStoredAudioFiles((prevFiles) => [...prevFiles, audioFile]);
+  //       Alert.alert('Recording Stopped', `Audio file saved at ${audioFile}`);
+  //     } catch (error) {
+  //       console.error("Error stopping recorder: ", error);
+  //       Alert.alert('Error', 'Failed to stop recording');
+  //     }
+  //   }
+  //   else {
+  //     startRecording();
+  //   }
 
-  };
+  // };
 
   return (
     <ImageBackground

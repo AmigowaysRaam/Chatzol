@@ -19,7 +19,6 @@ import { useWallpaper } from "../context/WallpaperContext";
 import { Louis_George_Cafe } from "../resources/fonts";
 import { COLORS } from "../resources/Colors";
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFS from 'react-native-fs';
 import LottieView from "lottie-react-native";
 import Toast from "react-native-toast-message";
@@ -29,7 +28,7 @@ import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-
 import { makeCall } from '../services/webrtc';
 import { Video, ResizeMode } from "expo-av";
 
-const audioRecorderPlayer = new AudioRecorderPlayer();
+// const audioRecorderPlayer = new AudioRecorderPlayer();
 const ChatScreen = () => {
 
   const navigation = useNavigation();
@@ -768,100 +767,100 @@ const sendImageToBackend = async (imageUri) => {
 const [playingId, setPlayingId] = useState(null);
 const [playTime, setPlayTime] = useState("00:00");
 
-const playAudio = async (item) => {
-  requestAudioPermission();
-  try {
-    if (playingId === item.id) {
-      await audioRecorderPlayer.stopPlayer();
-      audioRecorderPlayer.removePlayBackListener();
-      setPlayingId(null);
-      setPlayTime("00:00");
-      return;
-    }
+// const playAudio = async (item) => {
+//   requestAudioPermission();
+//   try {
+//     if (playingId === item.id) {
+//       await audioRecorderPlayer.stopPlayer();
+//       audioRecorderPlayer.removePlayBackListener();
+//       setPlayingId(null);
+//       setPlayTime("00:00");
+//       return;
+//     }
 
-    if (playingId) {
-      await audioRecorderPlayer.stopPlayer();
-      audioRecorderPlayer.removePlayBackListener();
-    }
+//     if (playingId) {
+//       await audioRecorderPlayer.stopPlayer();
+//       audioRecorderPlayer.removePlayBackListener();
+//     }
 
-    setPlayingId(item.id);
+//     setPlayingId(item.id);
 
-    await audioRecorderPlayer.startPlayer(item.audio);
+//     await audioRecorderPlayer.startPlayer(item.audio);
 
-    audioRecorderPlayer.addPlayBackListener((e) => {
+//     audioRecorderPlayer.addPlayBackListener((e) => {
 
-  if (!e.currentPosition || !e.duration) return;
+//   if (!e.currentPosition || !e.duration) return;
 
-  const current = audioRecorderPlayer.mmssss(
-    Math.floor(e.currentPosition)
-  );
+//   const current = audioRecorderPlayer.mmssss(
+//     Math.floor(e.currentPosition)
+//   );
 
-  setPlayTime(prev => prev !== current ? current : prev);
+//   setPlayTime(prev => prev !== current ? current : prev);
 
-  if (e.currentPosition >= e.duration) {
-    audioRecorderPlayer.stopPlayer();
-    audioRecorderPlayer.removePlayBackListener();
-    setPlayingId(null);
-    setPlayTime("00:00");
-  }
-});
+//   if (e.currentPosition >= e.duration) {
+//     audioRecorderPlayer.stopPlayer();
+//     audioRecorderPlayer.removePlayBackListener();
+//     setPlayingId(null);
+//     setPlayTime("00:00");
+//   }
+// });
 
 
-  } catch (error) {
-    console.log("Play error:", error);
-  }
-};
+//   } catch (error) {
+//     console.log("Play error:", error);
+//   }
+// };
 
 // local stoprecording
-const stopRecording = async () => {
-  try {
-    const result = await audioRecorderPlayer.stopRecorder();
-    audioRecorderPlayer.removeRecordBackListener();
-    setIsRecording(false);
+// const stopRecording = async () => {
+//   try {
+//     const result = await audioRecorderPlayer.stopRecorder();
+//     audioRecorderPlayer.removeRecordBackListener();
+//     setIsRecording(false);
 
-    const duration = recordingTime; // already mm:ss
+//     const duration = recordingTime; // already mm:ss
 
-    const audioMessage = {
-      id: Date.now().toString(),
-      messageid: Date.now().toString(),
-      audio: result,
-      text: "",
-      image: "",
-      position: "right",
-      timestamp: new Date().toISOString(),
-      duration: duration, // 👈 add this
-    };
+//     const audioMessage = {
+//       id: Date.now().toString(),
+//       messageid: Date.now().toString(),
+//       audio: result,
+//       text: "",
+//       image: "",
+//       position: "right",
+//       timestamp: new Date().toISOString(),
+//       duration: duration, // 👈 add this
+//     };
 
-    setChatMessages(prev => [...prev, audioMessage]);
-    setRecordingTime("00:00");
+//     setChatMessages(prev => [...prev, audioMessage]);
+//     setRecordingTime("00:00");
 
-  } catch (error) {
-    console.log("Stop recording error:", error);
-  }
-};
+//   } catch (error) {
+//     console.log("Stop recording error:", error);
+//   }
+// };
 
 // local startrecording
-const startRecording = async () => {
-  try {
-    const path =
-      Platform.OS === 'android'
-        ? `${RNFS.DocumentDirectoryPath}/audio_${Date.now()}.mp4`
-        : `audio_${Date.now()}.m4a`;
+// const startRecording = async () => {
+//   try {
+//     const path =
+//       Platform.OS === 'android'
+//         ? `${RNFS.DocumentDirectoryPath}/audio_${Date.now()}.mp4`
+//         : `audio_${Date.now()}.m4a`;
 
-    await audioRecorderPlayer.startRecorder(path);
+//     await audioRecorderPlayer.startRecorder(path);
 
-    audioRecorderPlayer.addRecordBackListener((e) => {
-      setRecordingTime(
-        audioRecorderPlayer.mmssss(Math.floor(e.currentPosition))
-      );
-    });
+//     audioRecorderPlayer.addRecordBackListener((e) => {
+//       setRecordingTime(
+//         audioRecorderPlayer.mmssss(Math.floor(e.currentPosition))
+//       );
+//     });
 
-    setIsRecording(true);
+//     setIsRecording(true);
 
-  } catch (error) {
-    console.log("Error starting recorder:", error);
-  }
-};
+//   } catch (error) {
+//     console.log("Error starting recorder:", error);
+//   }
+// };
 
   const emojiList = ['👍', '❤️', '😂', '😢', '😲'];
 
@@ -1005,6 +1004,12 @@ const renderItem = useCallback(({ item }) => {
   activeVideoId
 ]);
   return (
+    <KeyboardAvoidingView
+  style={{ flex: 1 }}
+  behavior={Platform.OS === "ios" ? "padding" : "height"}
+  keyboardVerticalOffset={hp(4)}
+
+>
     <ImageBackground
       source={wallpaper ? { uri: wallpaper ? wallpaper : require('../assets/chatbg.jpg') } : require('../assets/chatbg.jpg')}
       style={styles.imageBackground}
@@ -1450,6 +1455,7 @@ const renderItem = useCallback(({ item }) => {
         </View >
       </TouchableWithoutFeedback >
     </ImageBackground >
+    </KeyboardAvoidingView>
 
   );
 };
